@@ -1,4 +1,6 @@
-use std::{collections::HashSet, fs, hash::Hash, ops::Add};
+use std::{collections::HashSet, fs, hash::{BuildHasherDefault, Hash}, ops::Add};
+
+use fxhash::FxHashSet;
 
 pub fn solutions() {
     let input = get_input();
@@ -207,7 +209,7 @@ pub fn solve_second(input: (Point, Map)) -> i32 {
 
         let mut trace_position = starting;
         let mut trace_direction = Point::new(0, -1);
-        let mut trace_visited: HashSet<(Point, Point)> = HashSet::new();
+        let mut trace_visited: FxHashSet<(Point, Point)> = FxHashSet::with_capacity_and_hasher(200, BuildHasherDefault::default());
 
         loop {
             let trace_next = next_position(&map, &trace_position, &trace_direction, Some(&potential_obstacle));
