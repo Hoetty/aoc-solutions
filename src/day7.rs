@@ -31,24 +31,32 @@ pub fn concat(lhs: u64, rhs: u64) -> u64 {
     lhs + rhs
 }
 
-pub fn is_possible(target: u64, carry: u64, rest: &[u64], allow_concat: bool) -> bool {
+pub fn is_possible(target: u64, carry: u64, rest: &[u64]) -> bool {
     match rest {
         _ if carry > target => false,
         [] => target == carry,
-        [x, xs @ ..] => is_possible(target, carry + x, xs, allow_concat) || is_possible(target, carry * x, xs, allow_concat) || (allow_concat && is_possible(target, concat(carry, *x), xs, allow_concat))
+        [x, xs @ ..] => is_possible(target, carry + x, xs) || is_possible(target, carry * x, xs)
     }
 }
 
 pub fn solve_first(input: Vec<(u64, Vec<u64>)>) -> u64 {
     input.iter()
-        .filter(|(target, operands)| is_possible(*target, *operands.first().unwrap(), &operands[1..operands.len()], false))
+        .filter(|(target, operands)| is_possible(*target, *operands.first().unwrap(), &operands[1..operands.len()]))
         .map(|(target, _)| target)
         .sum()
 }
 
+pub fn is_possible_with_concat(target: u64, carry: u64, rest: &[u64]) -> bool {
+    match rest {
+        _ if carry > target => false,
+        [] => target == carry,
+        [x, xs @ ..] => is_possible_with_concat(target, carry + x, xs) || is_possible_with_concat(target, carry * x, xs) || is_possible_with_concat(target, concat(carry, *x), xs)
+    }
+}
+
 pub fn solve_second(input: Vec<(u64, Vec<u64>)>) -> u64 {
     input.iter()
-        .filter(|(target, operands)| is_possible(*target, *operands.first().unwrap(), &operands[1..operands.len()], true))
+        .filter(|(target, operands)| is_possible_with_concat(*target, *operands.first().unwrap(), &operands[1..operands.len()]))
         .map(|(target, _)| target)
         .sum()
 }
