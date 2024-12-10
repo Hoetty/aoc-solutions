@@ -9,6 +9,7 @@ pub mod day6;
 pub mod day7;
 pub mod day8;
 pub mod day9;
+pub mod day10;
 
 pub fn time(name: &str ,function: &dyn Fn()) {
     let start = Instant::now();
@@ -26,6 +27,7 @@ fn solve_all() {
     time("Day 7", &day7::solutions);
     time("Day 8", &day8::solutions);
     time("Day 9", &day9::solutions);
+    time("Day 10", &day10::solutions);
 }
 
 fn main() {
