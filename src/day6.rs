@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs, hash::{BuildHasherDefault, Hash}, ops::Add};
+use std::{collections::HashSet, fs, hash::{BuildHasherDefault, Hash}, ops::{Add, Sub}};
 
 use fxhash::FxHashSet;
 
@@ -38,6 +38,34 @@ impl Add for Point {
     fn add(self, rhs: Self) -> Self::Output {
         return Point::new(self.0 + rhs.0, self.1 + rhs.1);
     }
+}
+
+impl Sub for Point {
+    type Output = Point;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        return Point::new(self.0 - rhs.0, self.1 - rhs.1);
+    }
+}
+
+// Saves a point and a direction, but hashes only the point
+#[derive(Clone, Copy, Debug)]
+struct StealthDirection(Point, Point);
+
+impl Hash for StealthDirection {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        return self.0.hash(state);
+    }
+}
+
+impl PartialEq for StealthDirection {
+    fn eq(&self, other: &Self) -> bool {
+        return self.0 == other.0;
+    }
+}
+
+impl Eq for StealthDirection {
+
 }
 
 #[derive(Clone)]
@@ -181,34 +209,34 @@ pub fn solve_first(input: (Point, Map)) -> i32 {
 }
 
 pub fn solve_second(input: (Point, Map)) -> i32 {
-    let mut visited: HashSet<Point> = HashSet::new();
+    let mut visited: FxHashSet<StealthDirection> = FxHashSet::with_capacity_and_hasher(6000, BuildHasherDefault::default());
     let (starting, map) = input;
     {
-
         let mut position = starting;
         let mut direction = Point::new(0, -1);
     
         loop {
             let next = position + direction;
             match point_info_for_map(&map, &next) {
-                PointInfo::Air => position = next,
+                PointInfo::Air => {
+                    visited.insert(StealthDirection(next, direction));
+                    position = next;
+                },
                 PointInfo::Obstacle => direction = direction.rotate_right(),
                 PointInfo::OutOfMap => break,
             }
-    
-            visited.insert(position);
         }
     }
 
-    let mut obstacles = HashSet::new();
+    let mut obstacles = FxHashSet::with_capacity_and_hasher(2024, BuildHasherDefault::default());
 
-    for potential_obstacle in visited {
+    for StealthDirection(potential_obstacle, starting_direction) in visited {
         if potential_obstacle == starting {
             continue;
         }
 
-        let mut trace_position = starting;
-        let mut trace_direction = Point::new(0, -1);
+        let mut trace_position = potential_obstacle - starting_direction;
+        let mut trace_direction = starting_direction;
         let mut trace_visited: FxHashSet<(Point, Point)> = FxHashSet::with_capacity_and_hasher(200, BuildHasherDefault::default());
 
         loop {
