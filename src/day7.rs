@@ -6,7 +6,7 @@ pub fn solutions() {
     println!("Day 7, #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> Vec<(u64, Vec<u64>)> {
+pub fn get_input() -> Vec<(i64, Vec<i64>)> {
     fs::read_to_string("inputs/day7.txt")
         .expect("No file there")
         .lines()
@@ -19,44 +19,83 @@ pub fn get_input() -> Vec<(u64, Vec<u64>)> {
         )).collect()
 }
 
-pub fn concat(lhs: u64, rhs: u64) -> u64 {
-    let mut lhs = lhs * 10;
+#[inline]
+pub fn is_concattable(target: i64, operand: i64) -> (bool, i64) {
+    if target <= operand {
+        return (false, target);
+    }
+
     let mut t = 10;
 
-    while t <= rhs {
+    while t <= operand {
         t *= 10;
-        lhs *= 10;
     }
 
-    lhs + rhs
+    let minus = target - operand;
+    is_multipliable(minus, t)
 }
 
-pub fn is_possible(target: u64, carry: u64, rest: &[u64]) -> bool {
+#[inline]
+pub fn is_addable(target: i64, operand: i64) -> (bool, i64) {
+    let minus = target - operand;
+    (minus >= 0, minus)
+}
+
+#[inline]
+pub fn is_multipliable(target: i64, operand: i64) -> (bool, i64) {
+    (target >= operand && target % operand == 0, target / operand)
+}
+
+pub fn is_possible(target: i64, rest: &[i64]) -> bool {
     match rest {
-        _ if carry > target => false,
-        [] => target == carry,
-        [x, xs @ ..] => is_possible(target, carry + x, xs) || is_possible(target, carry * x, xs)
+        [] => target == 0,
+        [x, xs @ ..] => {
+            let multipliable = is_multipliable(target, *x);
+
+            if multipliable.0 && is_possible(multipliable.1, xs) {
+                return true;
+            }
+
+            let addable = is_addable(target, *x);
+            return addable.0 && is_possible(addable.1, xs);
+        }
     }
 }
 
-pub fn solve_first(input: Vec<(u64, Vec<u64>)>) -> u64 {
+pub fn solve_first(input: Vec<(i64, Vec<i64>)>) -> i64 {
     input.iter()
-        .filter(|(target, operands)| is_possible(*target, *operands.first().unwrap(), &operands[1..operands.len()]))
+        .map(|(target, operands)| (target, operands.iter().rev().map(|v| *v).collect::<Vec<i64>>()))
+        .filter(|(target, operands)| is_possible(**target, &operands[0..operands.len()]))
         .map(|(target, _)| target)
         .sum()
 }
 
-pub fn is_possible_with_concat(target: u64, carry: u64, rest: &[u64]) -> bool {
+pub fn is_possible_with_concat(target: i64, rest: &[i64]) -> bool {
     match rest {
-        _ if carry > target => false,
-        [] => target == carry,
-        [x, xs @ ..] => is_possible_with_concat(target, carry + x, xs) || is_possible_with_concat(target, carry * x, xs) || is_possible_with_concat(target, concat(carry, *x), xs)
+        [] => target == 0,
+        [x, xs @ ..] => {
+            let concattable = is_concattable(target, *x);
+
+            if concattable.0 && is_possible_with_concat(concattable.1, xs) {
+                return true;
+            }
+
+            let multipliable = is_multipliable(target, *x);
+
+            if multipliable.0 && is_possible_with_concat(multipliable.1, xs) {
+                return true;
+            }
+
+            let addable = is_addable(target, *x);
+            return addable.0 && is_possible_with_concat(addable.1, xs);
+        }
     }
 }
 
-pub fn solve_second(input: Vec<(u64, Vec<u64>)>) -> u64 {
+pub fn solve_second(input: Vec<(i64, Vec<i64>)>) -> i64 {
     input.iter()
-        .filter(|(target, operands)| is_possible_with_concat(*target, *operands.first().unwrap(), &operands[1..operands.len()]))
+        .map(|(target, operands)| (target, operands.iter().rev().map(|v| *v).collect::<Vec<i64>>()))
+        .filter(|(target, operands)| is_possible_with_concat(**target, &operands[0..operands.len()]))
         .map(|(target, _)| target)
         .sum()
 }
