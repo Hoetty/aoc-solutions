@@ -1,16 +1,16 @@
 use std::{collections::VecDeque, fs, usize};
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 9, #1: {}", solve_first(input.clone()));
-    println!("Day 9, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day9.txt");
+    println!("2024 Day 9 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 9 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> String {
-    fs::read_to_string("inputs/day9.txt").expect("No file there")
+fn get_input(file: &'static str) -> String {
+    fs::read_to_string(file).expect("No file there")
 }
 
-pub fn solve_first(input: String) -> u64 {
+fn solve_first(input: String) -> u64 {
     let mut files: Vec<(u16, usize)> = Vec::with_capacity(64);
     let mut empty_space: Vec<usize> = Vec::with_capacity(64);
 
@@ -37,7 +37,7 @@ pub fn solve_first(input: String) -> u64 {
     let mut new_filesystem: Vec<(u16, usize)> = Vec::with_capacity(index);
     let mut head = 0;
 
-    'outer: for tail in 0..files.len() {
+    'outer: for tail in (0..files.len()).rev() {
         match empty_space.get(head) {
             Some(new_index) if *new_index < files[tail].1 => {
                 new_filesystem.push((files[tail].0, *new_index));
@@ -61,7 +61,7 @@ pub fn solve_first(input: String) -> u64 {
     new_filesystem.iter().map(|(id, i)| *id as usize * *i).sum::<usize>() as u64
 }
 
-pub fn solve_second(input: String) -> u64 {
+fn solve_second(input: String) -> u64 {
     let mut free_space: Vec<VecDeque<usize>> = Vec::new();
     free_space.resize(10, VecDeque::new());
     let mut files: Vec<(u16, usize, u8)> = Vec::new();
@@ -134,4 +134,27 @@ pub fn solve_second(input: String) -> u64 {
     }
 
     sum as u64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (u64, u64) {
+        let file = fs::read_to_string("test-inputs/2024/day9-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day9.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day9.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

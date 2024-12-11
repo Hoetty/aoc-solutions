@@ -4,14 +4,14 @@ type Rules = Vec<Vec<bool>>;
 type Orders = Vec<Vec<usize>>;
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 5, #1: {}", solve_first(input.clone()));
-    println!("Day 5, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day5-1.txt", "inputs/2024/day5-2.txt");
+    println!("2024 Day 5 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 5 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> (Rules, Orders) {
+fn get_input(file: &'static str, file2: &'static str) -> (Rules, Orders) {
 
-    let r = fs::read_to_string("inputs/day5-1.txt").expect("No file there").lines().map(|line| {
+    let r = fs::read_to_string(file).expect("No file there").lines().map(|line| {
         let (a, b) = line.split_once("|").unwrap();
         (a.parse().unwrap(), b.parse().unwrap())
     }).collect::<Vec<(usize, usize)>>();
@@ -32,11 +32,11 @@ pub fn get_input() -> (Rules, Orders) {
 
     return (
         rules,
-        fs::read_to_string("inputs/day5-2.txt").expect("No file there").lines().map(|line| line.split_terminator(",").map(|s| s.parse().unwrap()).collect()).collect()
+        fs::read_to_string(file2).expect("No file there").lines().map(|line| line.split_terminator(",").map(|s| s.parse().unwrap()).collect()).collect()
     )
 }
 
-pub fn solve_first(input: (Rules, Orders)) -> i32 {
+fn solve_first(input: (Rules, Orders)) -> i32 {
     let (rules, orders) = input;
 
     let mut sum = 0;
@@ -56,7 +56,7 @@ pub fn solve_first(input: (Rules, Orders)) -> i32 {
     sum as i32
 }
 
-pub fn solve_second(input: (Rules, Orders)) -> i32 {
+fn solve_second(input: (Rules, Orders)) -> i32 {
     let (rules, orders) = input;
 
     let mut sum = 0;
@@ -83,4 +83,27 @@ pub fn solve_second(input: (Rules, Orders)) -> i32 {
     }
 
     return sum as i32;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (i32, i32) {
+        let file = fs::read_to_string("test-inputs/2024/day5-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day5-1.txt", "test-inputs/2024/day5-2.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day5-1.txt", "test-inputs/2024/day5-2.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

@@ -3,17 +3,17 @@ use std::fs;
 type List = Vec<Vec<i32>>;
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 2, #1: {}", solve_first(input.clone()));
-    println!("Day 2, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day2.txt");
+    println!("2024 Day 2 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 2 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> List {
-    let content = fs::read_to_string("inputs/day2.txt").expect("No file there");
+fn get_input(file: &'static str) -> List {
+    let content = fs::read_to_string(file).expect("No file there");
     content.lines().map(|l| l.split_whitespace().map(|s| s.parse::<i32>().expect("Input must be numeric")).collect::<Vec<i32>>()).collect::<List>()
 }
 
-pub fn solve_first(input: List) -> i32 {
+fn solve_first(input: List) -> i32 {
     input.iter()
         .map(|report| report.windows(2).map(|a| a[0] - a[1]))
         .filter(|report| report.clone().all(|diff| diff.is_negative()) || report.clone().all(|diff| diff.is_positive()))
@@ -21,7 +21,7 @@ pub fn solve_first(input: List) -> i32 {
         .count() as i32
 }
 
-pub fn solve_second(input: List) -> i32 {
+fn solve_second(input: List) -> i32 {
     let count_all = input.len();
 
     let bad: Vec<Vec<i32>> = input.iter()
@@ -50,4 +50,27 @@ pub fn solve_second(input: List) -> i32 {
     }
 
     return (count_all - bad_count) as i32;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (i32, i32) {
+        let file = fs::read_to_string("test-inputs/2024/day2-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day2.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day2.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

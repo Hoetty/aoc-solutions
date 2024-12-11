@@ -1,16 +1,16 @@
 use std::{collections::HashSet, fs};
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 4, #1: {}", solve_first(input.clone()));
-    println!("Day 4, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day4.txt");
+    println!("2024 Day 4 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 4 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> Vec<Vec<char>> {
-    return fs::read_to_string("inputs/day4.txt").expect("No file there").lines().map(|line| line.chars().collect()).collect();
+fn get_input(file: &'static str) -> Vec<Vec<char>> {
+    return fs::read_to_string(file).expect("No file there").lines().map(|line| line.chars().collect()).collect();
 }
 
-pub fn solve_first(input: Vec<Vec<char>>) -> i32 {
+fn solve_first(input: Vec<Vec<char>>) -> i32 {
     let height: i32 = input.len() as i32;
     let width: i32 = input[0].len() as i32;
     let mut num = 0;
@@ -35,7 +35,7 @@ pub fn solve_first(input: Vec<Vec<char>>) -> i32 {
     num
 }
 
-pub fn solve_second(input: Vec<Vec<char>>) -> i32 {
+fn solve_second(input: Vec<Vec<char>>) -> i32 {
     let height: i32 = input.len() as i32;
     let width: i32 = input[0].len() as i32;
     let sm: HashSet<char> = HashSet::from_iter(['S', 'M'].iter().cloned());
@@ -57,4 +57,27 @@ pub fn solve_second(input: Vec<Vec<char>>) -> i32 {
     }
 
     num
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (i32, i32) {
+        let file = fs::read_to_string("test-inputs/2024/day4-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day4.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day4.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

@@ -3,20 +3,20 @@ use std::{collections::HashSet, fs, hash::{BuildHasherDefault, Hash}, ops::{Add,
 use fxhash::FxHashSet;
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 6, #1: {}", solve_first(input.clone()));
-    println!("Day 6, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day6.txt");
+    println!("2024 Day 6 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 6 #2: {}", solve_second(input.clone()));
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PointInfo {
+enum PointInfo {
     Air,
     Obstacle,
     OutOfMap
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Debug)]
-pub struct Point(i16, i16);
+struct Point(i16, i16);
 
 impl Point {
     pub fn new(x: i16, y: i16) -> Point {
@@ -25,10 +25,6 @@ impl Point {
 
     pub fn rotate_right(&self) -> Point {
         return Point::new(-self.1, self.0);
-    }
-
-    pub fn mirrored(&self) -> Point {
-        return Point::new(-self.0, -self.1);
     }
 }
 
@@ -83,7 +79,7 @@ fn point_info_for_map(map: &Map, point: &Point) -> PointInfo {
     if map.obstacles_y[point.1 as usize].contains(&(point.0 as usize)) { PointInfo::Obstacle } else { PointInfo::Air }
 }
 
-pub fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&Point>) -> Option<Point> {
+fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&Point>) -> Option<Point> {
     match direction {
         Point(0, 1) => {
             for y in &map.obstacles_x[start.0 as usize] {
@@ -145,8 +141,8 @@ pub fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Opti
     }
 }
 
-pub fn get_input() -> (Point, Map) {
-    let file = fs::read_to_string("inputs/day6.txt").expect("No file there");
+fn get_input(file: &'static str) -> (Point, Map) {
+    let file = fs::read_to_string(file).expect("No file there");
     let lines = file.lines();
 
     let mut width = 0;
@@ -187,7 +183,7 @@ pub fn get_input() -> (Point, Map) {
     );
 }
 
-pub fn solve_first(input: (Point, Map)) -> i32 {
+fn solve_first(input: (Point, Map)) -> i32 {
     let mut visited: HashSet<Point> = HashSet::new();
     let (starting, map) = input;
 
@@ -208,7 +204,7 @@ pub fn solve_first(input: (Point, Map)) -> i32 {
     visited.len() as i32
 }
 
-pub fn solve_second(input: (Point, Map)) -> i32 {
+fn solve_second(input: (Point, Map)) -> i32 {
     let mut visited: FxHashSet<StealthDirection> = FxHashSet::with_capacity_and_hasher(6000, BuildHasherDefault::default());
     let (starting, map) = input;
     {
@@ -258,4 +254,27 @@ pub fn solve_second(input: (Point, Map)) -> i32 {
     }
 
     obstacles.len() as i32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (i32, i32) {
+        let file = fs::read_to_string("test-inputs/2024/day6-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day6.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day6.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

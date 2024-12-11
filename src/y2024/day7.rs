@@ -1,13 +1,13 @@
 use std::fs;
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 7, #1: {}", solve_first(input.clone()));
-    println!("Day 7, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day7.txt");
+    println!("2024 Day 7 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 7 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> Vec<(i64, Vec<i64>)> {
-    fs::read_to_string("inputs/day7.txt")
+fn get_input(file: &'static str) -> Vec<(i64, Vec<i64>)> {
+    fs::read_to_string(file)
         .expect("No file there")
         .lines()
         .map(|l| l.split_once(": ").expect("No divider"))
@@ -20,7 +20,7 @@ pub fn get_input() -> Vec<(i64, Vec<i64>)> {
 }
 
 #[inline]
-pub fn is_concattable(target: i64, operand: i64) -> (bool, i64) {
+fn is_concattable(target: i64, operand: i64) -> (bool, i64) {
     if target <= operand {
         return (false, target);
     }
@@ -36,17 +36,17 @@ pub fn is_concattable(target: i64, operand: i64) -> (bool, i64) {
 }
 
 #[inline]
-pub fn is_addable(target: i64, operand: i64) -> (bool, i64) {
+fn is_addable(target: i64, operand: i64) -> (bool, i64) {
     let minus = target - operand;
     (minus >= 0, minus)
 }
 
 #[inline]
-pub fn is_multipliable(target: i64, operand: i64) -> (bool, i64) {
+fn is_multipliable(target: i64, operand: i64) -> (bool, i64) {
     (target >= operand && target % operand == 0, target / operand)
 }
 
-pub fn is_possible(target: i64, rest: &[i64]) -> bool {
+fn is_possible(target: i64, rest: &[i64]) -> bool {
     match rest {
         [] => target == 0,
         [x, xs @ ..] => {
@@ -62,7 +62,7 @@ pub fn is_possible(target: i64, rest: &[i64]) -> bool {
     }
 }
 
-pub fn solve_first(input: Vec<(i64, Vec<i64>)>) -> i64 {
+fn solve_first(input: Vec<(i64, Vec<i64>)>) -> i64 {
     input.iter()
         .map(|(target, operands)| (target, operands.iter().rev().map(|v| *v).collect::<Vec<i64>>()))
         .filter(|(target, operands)| is_possible(**target, &operands[0..operands.len()]))
@@ -70,7 +70,7 @@ pub fn solve_first(input: Vec<(i64, Vec<i64>)>) -> i64 {
         .sum()
 }
 
-pub fn is_possible_with_concat(target: i64, rest: &[i64]) -> bool {
+fn is_possible_with_concat(target: i64, rest: &[i64]) -> bool {
     match rest {
         [] => target == 0,
         [x, xs @ ..] => {
@@ -92,10 +92,33 @@ pub fn is_possible_with_concat(target: i64, rest: &[i64]) -> bool {
     }
 }
 
-pub fn solve_second(input: Vec<(i64, Vec<i64>)>) -> i64 {
+fn solve_second(input: Vec<(i64, Vec<i64>)>) -> i64 {
     input.iter()
         .map(|(target, operands)| (target, operands.iter().rev().map(|v| *v).collect::<Vec<i64>>()))
         .filter(|(target, operands)| is_possible_with_concat(**target, &operands[0..operands.len()]))
         .map(|(target, _)| target)
         .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (i64, i64) {
+        let file = fs::read_to_string("test-inputs/2024/day7-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day7.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day7.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

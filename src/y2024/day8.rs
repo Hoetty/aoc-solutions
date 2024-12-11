@@ -1,24 +1,25 @@
 use std::{collections::{HashMap, HashSet}, fs, ops::{Add, Sub}};
 
-use num::integer::gcd;
+// use num::integer::gcd;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
-pub struct Vector2 {
+struct Vector2 {
     x: i32,
     y: i32
 }
 
 impl Vector2 {
-    pub fn new(x: i32, y: i32) -> Vector2 {
+    fn new(x: i32, y: i32) -> Vector2 {
         Vector2 { x, y }
     }
 
-    pub fn scaled_down(&self) -> Vector2 {
-        let div = gcd(self.x, self.y);
-        Vector2::new(self.x / div, self.y / div)
-    }
+    // To scale down a vector, in case a smaller one would be possible
+    // fn scaled_down(&self) -> Vector2 {
+    //     let div = gcd(self.x, self.y);
+    //     Vector2::new(self.x / div, self.y / div)
+    // }
 
-    pub fn scaled(&self, scale: i32) -> Vector2 {
+    fn scaled(&self, scale: i32) -> Vector2 {
         return Vector2::new(self.x * scale, self.y * scale);
     }
 }
@@ -40,13 +41,13 @@ impl Sub for Vector2 {
 }
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 8, #1: {}", solve_first(input.clone()));
-    println!("Day 8, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day8.txt");
+    println!("2024 Day 8 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 8 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> (HashMap<char, Vec<Vector2>>, Vector2) {
-    let file: Vec<Vec<char>> = fs::read_to_string("inputs/day8.txt").expect("No file there").lines().map(|l| l.chars().collect()).collect();
+fn get_input(file: &'static str) -> (HashMap<char, Vec<Vector2>>, Vector2) {
+    let file: Vec<Vec<char>> = fs::read_to_string(file).expect("No file there").lines().map(|l| l.chars().collect()).collect();
 
     let mut antennas = HashMap::new();
     let mut width = 0;
@@ -73,7 +74,7 @@ pub fn get_input() -> (HashMap<char, Vec<Vector2>>, Vector2) {
     (antennas, Vector2::new(width, height))
 }
 
-pub fn solve_first(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
+fn solve_first(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     let mut stations: HashSet<Vector2> = HashSet::new();
 
     let (antennas, dimensions) = input;
@@ -94,7 +95,7 @@ pub fn solve_first(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     stations.iter().filter(|v| v.x >= 0 && v.y >= 0 && v.x < dimensions.x && v.y < dimensions.y).count() as i32
 }
 
-pub fn solve_second(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
+fn solve_second(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     let mut stations: HashSet<Vector2> = HashSet::new();
 
     let (antennas, dimensions) = input;
@@ -134,4 +135,27 @@ pub fn solve_second(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     }
 
     stations.len() as i32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (i32, i32) {
+        let file = fs::read_to_string("test-inputs/2024/day8-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day8.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day8.txt"));
+        assert_eq!(result, expected().1);
+    }
 }

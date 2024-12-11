@@ -4,13 +4,13 @@ use cached::proc_macro::cached;
 use fxhash::FxHashMap;
 
 pub fn solutions() {
-    let input = get_input();
-    println!("Day 11, #1: {}", solve_first(input.clone()));
-    println!("Day 11, #2: {}", solve_second(input.clone()));
+    let input = get_input("inputs/2024/day11.txt");
+    println!("2024 Day 11 #1: {}", solve_first(input.clone()));
+    println!("2024 Day 11 #2: {}", solve_second(input.clone()));
 }
 
-pub fn get_input() -> Vec<u64> {
-    fs::read_to_string("inputs/day11.txt").expect("No file there").split_whitespace().map(|s| s.parse().unwrap()).collect()
+fn get_input(file: &'static str) -> Vec<u64> {
+    fs::read_to_string(file).expect("No file there").split_whitespace().map(|s| s.parse().unwrap()).collect()
 }
 
 fn is_splittable(num: u64) -> (bool, u64, u64) {
@@ -57,14 +57,37 @@ fn mutations(num: u64, depth: u8) -> u64 {
     mutations(num * 2024, depth - 1)
 }
 
-pub fn solve_first(input: Vec<u64>) -> u64 {
+fn solve_first(input: Vec<u64>) -> u64 {
     input.iter()
         .map(|num| mutations(*num, 25))
         .sum()
 }
 
-pub fn solve_second(input: Vec<u64>) -> u64 {
+fn solve_second(input: Vec<u64>) -> u64 {
     input.iter()
         .map(|num| mutations(*num, 75))
         .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected() -> (u64, u64) {
+        let file = fs::read_to_string("test-inputs/2024/day11-expect.txt").expect("Expect file missing");
+        let nums: Vec<&str> = file.split_whitespace().collect();
+        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
+    }
+
+    #[test]
+    fn part1() {
+        let result = solve_first(get_input("test-inputs/2024/day11.txt"));
+        assert_eq!(result, expected().0);
+    }
+
+    #[test]
+    fn part2() {
+        let result = solve_second(get_input("test-inputs/2024/day11.txt"));
+        assert_eq!(result, expected().1);
+    }
 }
