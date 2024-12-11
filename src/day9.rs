@@ -11,50 +11,54 @@ pub fn get_input() -> String {
 }
 
 pub fn solve_first(input: String) -> u64 {
-    let mut filesystem: Vec<Option<u16>> = Vec::new();
+    let mut files: Vec<(u16, usize)> = Vec::with_capacity(64);
+    let mut empty_space: Vec<usize> = Vec::with_capacity(64);
 
     let mut id = 0;
+    let mut index: usize = 0;
 
     for (i, char) in input.chars().enumerate() {
         let count = (char as u8) - 48; // char -> i16
 
         for _ in 0..count {
-            if i % 2 == 0 {
-                filesystem.push(Some(id));
+            if i & 1 == 0 {
+                files.push((id, index));
             } else {
-                filesystem.push(None);
+                empty_space.push(index);
             }
+            index += 1;
         }
 
-        if i % 2 == 0 {
+        if i & 1 == 0 {
             id += 1;
         }
     }
 
+    let mut new_filesystem: Vec<(u16, usize)> = Vec::with_capacity(index);
     let mut head = 0;
-    let mut tail = filesystem.len() - 1;
 
-    while tail > head {
-        if filesystem[head].is_some() {
-            head += 1;
-            continue;
+    'outer: for tail in 0..files.len() {
+        match empty_space.get(head) {
+            Some(new_index) if *new_index < files[tail].1 => {
+                new_filesystem.push((files[tail].0, *new_index));
+                head += 1;
+            },
+            _ => {
+                let mut tail = tail;
+                loop {
+                    new_filesystem.push(files[tail]);
+                    if tail == 0 {
+                        break;
+                    }
+
+                    tail -= 1;
+                }
+                break 'outer;
+            },
         }
-
-        if filesystem[tail].is_none() {
-            tail -= 1;
-            continue;
-        }
-
-        filesystem[head] = filesystem[tail];
-        filesystem[tail] = None;
     }
 
-    let mut sum: u64 = 0;
-    for i in 0..tail {
-        sum += i as u64 * filesystem[i].expect("Must be some") as u64;
-    }
-
-    sum
+    new_filesystem.iter().map(|(id, i)| *id as usize * *i).sum::<usize>() as u64
 }
 
 pub fn solve_second(input: String) -> u64 {
