@@ -13,10 +13,6 @@ pub fn get_input() -> Vec<u64> {
     fs::read_to_string("inputs/day11.txt").expect("No file there").split_whitespace().map(|s| s.parse().unwrap()).collect()
 }
 
-#[cached(
-    ty = "FxHashMap<u64, (bool, u64, u64)>",
-    create = "{ FxHashMap::with_capacity_and_hasher(1000, BuildHasherDefault::default()) }",
-)]
 fn is_splittable(num: u64) -> (bool, u64, u64) {
     let mut i = 0;
     let mut t = 1;
