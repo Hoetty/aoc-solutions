@@ -1,4 +1,4 @@
-use std::fs;
+use std::{collections::VecDeque, fs, usize};
 
 pub fn solutions() {
     let input = get_input();
@@ -57,71 +57,75 @@ pub fn solve_first(input: String) -> u64 {
     sum
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub enum File {
-    Present(u16, u8),
-    Empty(u8)
-}
-
 pub fn solve_second(input: String) -> u64 {
-    let mut filesystem: Vec<File> = Vec::new();
-
+    let mut free_space: Vec<VecDeque<usize>> = Vec::new();
+    free_space.resize(10, VecDeque::new());
+    let mut files: Vec<(u16, usize, u8)> = Vec::new();
+    
     let mut id = 0;
-
+    let mut index = 0;
     for (i, char) in input.chars().enumerate() {
         let count = (char as u8) - 48; // char -> i16
 
         if i % 2 == 0 {
-            filesystem.push(File::Present(id, count));
-        } else {
-            filesystem.push(File::Empty(count));
-        }
-        
-        if i % 2 == 0 {
+            files.push((id, index, count));
             id += 1;
+        } else if count == 0 {
+            continue;
+        } else {
+            free_space[count as usize].push_back(index);
         }
+
+        index += count as usize;
     }
 
-    let mut minimum: Vec<usize> = Vec::new();
-    minimum.resize(11, 0);  
+    let mut new_files = Vec::with_capacity(files.len());
 
-    for file_head in (0..filesystem.len()).rev() {
-        let (id, file_size) = match filesystem[file_head] {
-            File::Empty(_) => continue,
-            File::Present(id, size) => (id, size),
-        };
+    for file in files.iter().rev() {
+        let mut empty_block_size = 11;
+        let mut earliest_empty_space = None;
 
-        for empty_head in minimum[file_size as usize]..file_head {
-            match filesystem[empty_head] {
-                File::Present(_, _) => continue,
-                File::Empty(space) if space >= file_size => {
-                    filesystem[file_head] = File::Empty(file_size);
-                    filesystem[empty_head] = File::Present(id, file_size);
-                    filesystem.insert(empty_head + 1, File::Empty(space - file_size));
-                    minimum[file_size as usize] = empty_head + 1;
-                    break;
+        // Find the earliest block of empty space, that is at least the size of the file
+        for space in file.2..10 {
+            let possible_place = free_space[space as usize].front();
+
+            match possible_place {
+                Some(possible_index) if earliest_empty_space.is_none() || possible_index < earliest_empty_space.unwrap() => {
+                    earliest_empty_space = possible_place;
+                    empty_block_size = space;
                 },
-                _ => continue
-            }
+                _ => { },
+            }            
+        }
+
+        match earliest_empty_space {
+            Some(new_file_index) if *new_file_index < file.1 => {
+                // Move the file to the empty space
+                new_files.push((file.0, *new_file_index, file.2));
+
+                let remaining_space = empty_block_size - file.2;
+                let new_empty_index = new_file_index + file.2 as usize;
+
+                // Remove the old free space
+                free_space[empty_block_size as usize].pop_front();
+
+                // Add new free space
+                if remaining_space > 0 {
+                    let pos = free_space[remaining_space as usize].binary_search(&new_empty_index);
+                    free_space[remaining_space as usize].insert(pos.unwrap_or_else(|x| x), new_empty_index);
+                }
+            },
+            _ => {
+                new_files.push(*file);
+            },
         }
     }
 
     let mut sum = 0;
-    let mut i: u64 = 0;
 
-    for file in filesystem {
-        match file {
-            File::Present(id, size) => {
-                for _ in 0..size {
-                    sum += id as u64 * i as u64;
-                    i += 1;
-                }
-            },
-            File::Empty(size) => {
-                for _ in 0..size {
-                    i += 1;
-                }
-            },
+    for file in new_files {
+        for i in 0..file.2 {
+            sum += file.0 as usize * (file.1 + i as usize);
         }
     }
 
