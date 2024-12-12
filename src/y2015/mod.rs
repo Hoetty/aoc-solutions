@@ -13,5 +13,5 @@ pub fn solve_all() {
     time("Day 3", &day3::solutions);
     // time("Day 4", &day4::solutions);
     time("Day 5", &day5::solutions);
-    // time("Day 6", &day6::solutions);
+    time("Day 6", &day6::solutions);
 }
