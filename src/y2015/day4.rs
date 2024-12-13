@@ -1,5 +1,7 @@
 use std::fs;
 
+#[allow(dead_code)]
+
 pub fn solutions() {
     let input = get_input("inputs/2015/day4.txt");
     println!("2015 Day 4 #1: {}", solve_first(input.clone()));
