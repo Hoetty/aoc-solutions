@@ -1,6 +1,6 @@
 use std::{fs::{self, OpenOptions}, io::Write};
 
-const DIMENSION: (i16, i16) = (101, 103);
+const DIMENSION: (i64, i64) = (101, 103);
 const TREE_THRESHOLD: f64 = 700.0;
 
 pub fn solutions() {
@@ -10,18 +10,18 @@ pub fn solutions() {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-struct Robot((i16, i16), (i16, i16));
+struct Robot((i64, i64), (i64, i64));
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 struct Map {
     robots: Vec<Robot>,
-    dimension: (i16, i16),
+    dimension: (i64, i64),
 }
 
 impl Map {
     
-    fn step(&mut self) {
+    fn step(&mut self, amount: i64) {
         for robot in &mut self.robots {
-            robot.0 = ((self.dimension.0 + robot.0.0 + robot.1.0) % self.dimension.0, (self.dimension.1 + robot.0.1 + robot.1.1) % self.dimension.1);
+            robot.0 = ((robot.0.0 + robot.1.0 * amount).rem_euclid(self.dimension.0), (robot.0.1 + robot.1.1 * amount).rem_euclid(self.dimension.1));
         }
     }
 
@@ -106,7 +106,7 @@ impl Map {
     }
 }
 
-fn get_input(file: &'static str, dimension: (i16, i16)) -> Map {
+fn get_input(file: &'static str, dimension: (i64, i64)) -> Map {
     Map {
         robots: fs::read_to_string(file).expect("No file there").lines().map(|l| {
             let l = l.replace("p=", "").replace("v=", "");
@@ -123,9 +123,7 @@ fn get_input(file: &'static str, dimension: (i16, i16)) -> Map {
 
 fn solve_first(input: Map) -> u64 {
     let mut input = input;
-    for _ in 0..100 {
-        input.step();
-    }
+    input.step(100);
 
     input.calculate_safety_score()
 }
@@ -183,13 +181,13 @@ fn solve_second(input: Map) -> u64 {
 
         i += 1;
 
-        input.step();
+        input.step(1);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    const TEST_DIMENSION: (i16, i16) = (101, 103);
+    const TEST_DIMENSION: (i64, i64) = (101, 103);
 
     use super::*;
 
