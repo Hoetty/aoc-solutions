@@ -10,6 +10,6 @@ pub fn time(name: &str ,function: &dyn Fn()) {
 }
 
 fn main() {
-    time("2015 Total", &y2015::solve_all);
+    // time("2015 Total", &y2015::solve_all);
     time("2024 Total", &y2024::solve_all);
 }

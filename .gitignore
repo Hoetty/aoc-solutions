@@ -2,3 +2,6 @@
 target
 perf.*
 flamegraph.svg
+test.csv
+dump.txt
+test.ipynb
