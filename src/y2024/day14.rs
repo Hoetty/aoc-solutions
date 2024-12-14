@@ -1,7 +1,7 @@
 use std::{fs::{self, OpenOptions}, io::Write};
 
 const DIMENSION: (i16, i16) = (101, 103);
-const TREE_THRESHOLD: f64 = 32.0;
+const TREE_THRESHOLD: f64 = 700.0;
 
 pub fn solutions() {
     let input = get_input("inputs/2024/day14.txt", DIMENSION);
@@ -62,21 +62,21 @@ impl Map {
         (x as f64 / count, y as f64 / count)
     }
 
-    fn v(&self) -> f64 {
-        let mut v = 0.0;
+    fn v(&self) -> (f64, f64) {
+        let mut vx = 0.0;
+        let mut vy = 0.0;
         let mu = self.mu();
+
+        let count = self.robots.len() as f64;
 
         for robot in &self.robots {
             let diff_x = robot.0.0 as f64 - mu.0;
             let diff_y = robot.0.1 as f64 - mu.1;
-            v += diff_x * diff_x + diff_y * diff_y
+            vx += diff_x * diff_x;
+            vy += diff_y * diff_y;
         }
 
-        v / self.robots.len() as f64 
-    }
-
-    fn sigma(&self) -> f64 {
-        self.v().sqrt()
+        (vx / count, vy / count)
     }
 
     #[allow(unused)]
@@ -130,13 +130,55 @@ fn solve_first(input: Map) -> u64 {
     input.calculate_safety_score()
 }
 
+// The drones have repeating cycles of low variance with a frequency equal to the length of the dimension:
+// In x direction -> width
+// In y direction -> height
+// We find both first spots and then calculate when the two frequencies will meet. Thats the christmas tree
 fn solve_second(input: Map) -> u64 {
     let mut input = input;
-    let mut i = 0;
+    let mut i: u64 = 0;
+
+    let mut x = 0;
+    let mut y = 0;
 
     loop {
-        if input.sigma() < TREE_THRESHOLD {
-            return i;
+        let v = input.v();
+        if x == 0 && v.0 < TREE_THRESHOLD {
+            x = i;
+        }
+
+        if y == 0 && v.1 < TREE_THRESHOLD {
+            y = i;
+        }
+
+        if x > 0 && y > 0 {
+            let (width, height) = input.dimension;
+
+            if width < height {
+                if x < y {
+                    x += width as u64;
+                }
+
+                let mut diff = x - y;
+
+                if diff & 1 == 1 {
+                    diff += width as u64;
+                }
+
+                return y + diff / 2 * height as u64;
+            } else {
+                if x > y {
+                    y += height as u64;
+                }
+
+                let mut diff = y - x;
+
+                if diff & 1 == 1 {
+                    diff += height as u64;
+                }
+
+                return x + diff / 2 * width as u64;
+            }
         }
 
         i += 1;
