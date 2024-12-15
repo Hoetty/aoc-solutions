@@ -177,6 +177,7 @@ fn dump_map(tiles: &Vec<WideTile>, width: usize) {
 }
 
 fn solve_second(input: Map) -> usize {
+    let width = input.width * 2;
     let mut tiles: Vec<WideTile> = Vec::with_capacity(input.tiles.len() * 2);
 
     for tile in input.tiles {
@@ -204,7 +205,7 @@ fn solve_second(input: Map) -> usize {
     let mut sum = 0;
     for (i, tile) in tiles.iter().enumerate() {
         if *tile == WideTile::LeftBox {
-            sum += i / (input.width * 2) * 100 + i % (input.width * 2);
+            sum += i / width * 100 + i % width;
         }
     }
 
