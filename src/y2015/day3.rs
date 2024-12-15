@@ -3,7 +3,7 @@ use std::{collections::HashSet, fs};
 pub fn solutions() {
     let input = get_input("inputs/2015/day3.txt");
     println!("2015 Day 3 #1: {}", solve_first(input.clone()));
-    println!("2015 Day 3 #2: {}", solve_second(input.clone()));
+    println!("2015 Day 3 #2: {}", solve_second(input));
 }
 
 pub fn get_input(file: &'static str) -> String {

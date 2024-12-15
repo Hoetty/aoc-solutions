@@ -3,7 +3,7 @@ use std::fs;
 pub fn solutions() {
     let input = get_input("inputs/2015/day6.txt");
     println!("2015 Day 6 #1: {}", solve_first(input.clone()));
-    println!("2015 Day 6 #2: {}", solve_second(input.clone()));
+    println!("2015 Day 6 #2: {}", solve_second(input));
 }
 
 const TURN_ON: &str = "turn on";

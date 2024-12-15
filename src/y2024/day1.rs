@@ -5,7 +5,7 @@ type List = (Vec<i32>, Vec<i32>);
 pub fn solutions() {
     let input = get_input("inputs/2024/day1.txt");
     println!("2024 Day 1 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 1 #2: {}", solve_second(input.clone()));
+    println!("2024 Day 1 #2: {}", solve_second(input));
 }
 
 fn get_input(file: &'static str) -> List {

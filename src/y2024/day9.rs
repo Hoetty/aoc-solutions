@@ -3,7 +3,7 @@ use std::{collections::VecDeque, fs, usize};
 pub fn solutions() {
     let input = get_input("inputs/2024/day9.txt");
     println!("2024 Day 9 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 9 #2: {}", solve_second(input.clone()));
+    println!("2024 Day 9 #2: {}", solve_second(input));
 }
 
 fn get_input(file: &'static str) -> String {

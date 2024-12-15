@@ -43,7 +43,7 @@ impl Sub for Vector2 {
 pub fn solutions() {
     let input = get_input("inputs/2024/day8.txt");
     println!("2024 Day 8 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 8 #2: {}", solve_second(input.clone()));
+    println!("2024 Day 8 #2: {}", solve_second(input));
 }
 
 fn get_input(file: &'static str) -> (HashMap<char, Vec<Vector2>>, Vector2) {

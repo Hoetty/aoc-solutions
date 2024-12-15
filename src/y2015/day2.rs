@@ -3,7 +3,7 @@ use std::{cmp::min, fs};
 pub fn solutions() {
     let input = get_input("inputs/2015/day2.txt");
     println!("2015 Day 2 #1: {}", solve_first(input.clone()));
-    println!("2015 Day 2 #2: {}", solve_second(input.clone()));
+    println!("2015 Day 2 #2: {}", solve_second(input));
 }
 
 pub fn get_input(file: &'static str) -> Vec<(i32, i32, i32)> {

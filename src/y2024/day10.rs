@@ -5,7 +5,7 @@ use fxhash::FxHashSet;
 pub fn solutions() {
     let input = get_input("inputs/2024/day10.txt");
     println!("2024 Day 10 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 10 #2: {}", solve_second(input.clone()));
+    println!("2024 Day 10 #2: {}", solve_second(input));
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
