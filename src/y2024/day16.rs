@@ -131,7 +131,6 @@ struct PathPoint {
     index: usize,
     direction: isize,
     score: usize,
-    travelled: Vec<usize>,
     last: Option<Rc<PathPoint>>
 }
 
@@ -145,7 +144,6 @@ fn solve_second(input: Maze) -> usize {
             index: input.start, 
             direction: 1, 
             score: 0,
-            travelled: Vec::new(),
             last: None 
         }
     ]);
@@ -159,7 +157,6 @@ fn solve_second(input: Maze) -> usize {
         let mut paths: Vec<PathPoint> = Vec::new();
 
         for state in current_round.clone() {
-            let mut travelled = Vec::new();
             let reference = Rc::new(state);
 
             let mut i = 0;
@@ -169,8 +166,6 @@ fn solve_second(input: Maze) -> usize {
                 if input.tiles[current_pos] {
                     break;
                 }
-
-                travelled.push(current_pos);
 
                 if current_pos == input.end {
                     let score = reference.score + i as usize;
@@ -186,7 +181,6 @@ fn solve_second(input: Maze) -> usize {
                                 index: current_pos,
                                 direction: reference.direction,
                                 score,
-                                travelled: travelled.clone(),
                                 last: Some(Rc::clone(&reference)),
                             });
                         },
@@ -196,7 +190,6 @@ fn solve_second(input: Maze) -> usize {
                                 index: current_pos,
                                 direction: reference.direction,
                                 score,
-                                travelled: travelled.clone(),
                                 last: Some(Rc::clone(&reference)),
                             });
                         },
@@ -211,7 +204,6 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: right,
                             score: reference.score + 1000 + i as usize,
-                            travelled: travelled.clone(),
                             last: Some(Rc::clone(&reference)),
                         });
                         newly_visited.insert((current_pos, right));
@@ -220,7 +212,6 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: right,
                             score: reference.score + 1000 + i as usize,
-                            travelled: travelled.clone(),
                             last: Some(Rc::clone(&reference)),
                         });
                     }
@@ -234,7 +225,6 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: left,
                             score: reference.score + 1000 + i as usize,
-                            travelled: travelled.clone(),
                             last: Some(Rc::clone(&reference)),
                         });
                         newly_visited.insert((current_pos, left));
@@ -243,7 +233,6 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: left,
                             score: reference.score + 1000 + i as usize,
-                            travelled: travelled.clone(),
                             last: Some(Rc::clone(&reference)),
                         });
                     }
@@ -260,11 +249,22 @@ fn solve_second(input: Maze) -> usize {
                 let mut path = &path;
 
                 loop {
-                    path_tiles.extend(path.travelled.iter());
+                    if let Some(previous_path) = &path.last {
+                        let mut i = 1;
+                        loop {
+                            let pos = (previous_path.index as isize + i * previous_path.direction) as usize;
+                            path_tiles.insert(pos);
 
-                    if let Some(next_path) = &path.last {
-                        path = next_path;
+                            if pos == path.index {
+                                break;
+                            }
+
+                            i += 1;
+                        }
+
+                        path = previous_path;
                     } else {
+                        path_tiles.insert(path.index);
                         break;
                     }
                 }
