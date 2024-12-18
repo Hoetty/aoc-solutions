@@ -36,5 +36,6 @@ pub fn solve_all() {
     time("2024 Day 14", &day14::solutions);
     time("2024 Day 15", &day15::solutions);
     time("2024 Day 16", &day16::solutions);
+    time("2024 Day 17", &day17::solutions);
     time("2024 Day 18", &day18::solutions);
 }

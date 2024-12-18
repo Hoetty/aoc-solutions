@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, fs::{self}, u64};
+use std::{collections::VecDeque, fs::{self}};
 
 const DIMENSIONS: (usize, usize) = (71, 71);
 
