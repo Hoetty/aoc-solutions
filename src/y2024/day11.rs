@@ -1,6 +1,5 @@
-use std::{fs, hash::BuildHasherDefault};
+use std::{collections::HashMap, fs, hash::BuildHasherDefault};
 
-use cached::proc_macro::cached;
 use fxhash::FxHashMap;
 
 pub fn solutions() {
@@ -35,37 +34,45 @@ fn is_splittable(num: u64) -> (bool, u64, u64) {
     (true, left, right)
 }
 
-#[cached(
-    ty = "FxHashMap<(u64, u8), u64>",
-    create = "{ FxHashMap::with_capacity_and_hasher(100000, BuildHasherDefault::default()) }",
-)]
-fn mutations(num: u64, depth: u8) -> u64 {
+const CACHE_TRESHOLD: u8 = 4;
+
+fn mutations(num: u64, depth: u8, cache: &mut FxHashMap<(u64, u8), u64>) -> u64 {
     if depth == 0 {
         return 1;
     }
 
     if num == 0 {
-        return mutations(1, depth - 1);
+        return mutations(1, depth - 1, cache);
     }
 
     let (is, left, right) = is_splittable(num);
 
     if is {
-        return mutations(left, depth - 1) + mutations(right, depth - 1);
+        if depth > CACHE_TRESHOLD {
+            if let Some(value) = cache.get(&(num, depth)) {
+                return *value;
+            }
+        }
+
+        let value = mutations(left, depth - 1, cache) + mutations(right, depth - 1, cache);
+        if depth > CACHE_TRESHOLD {
+            cache.insert((num, depth), value);
+        }
+        return value;
     }
 
-    mutations(num * 2024, depth - 1)
+    mutations(num * 2024, depth - 1, cache)
 }
 
 fn solve_first(input: Vec<u64>) -> u64 {
     input.iter()
-        .map(|num| mutations(*num, 25))
+        .map(|num| mutations(*num, 25, &mut FxHashMap::with_capacity_and_hasher(4096, BuildHasherDefault::default())))
         .sum()
 }
 
 fn solve_second(input: Vec<u64>) -> u64 {
     input.iter()
-        .map(|num| mutations(*num, 75))
+        .map(|num| mutations(*num, 75, &mut FxHashMap::with_capacity_and_hasher(4096, BuildHasherDefault::default())))
         .sum()
 }
 
