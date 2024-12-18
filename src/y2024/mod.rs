@@ -17,6 +17,7 @@ pub mod day14;
 pub mod day15;
 pub mod day16;
 pub mod day17;
+pub mod day18;
 
 pub fn solve_all() {
     time("2024 Day 1", &day1::solutions);
@@ -35,5 +36,5 @@ pub fn solve_all() {
     time("2024 Day 14", &day14::solutions);
     time("2024 Day 15", &day15::solutions);
     time("2024 Day 16", &day16::solutions);
-    time("2024 Day 17", &day17::solutions);
+    time("2024 Day 18", &day18::solutions);
 }
