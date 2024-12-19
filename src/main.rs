@@ -1,9 +1,7 @@
-use std::{fmt::Display, fs, ops::RangeToInclusive, time::Instant};
+use std::{fmt::Display, fs, time::Instant};
 
-use colored::Colorize;
-use num::iter::Range;
 use strip_ansi_escapes::strip;
-use tabled::{builder::Builder, grid::{config::Borders, Grid}, settings::{location::Location, object::{Cell, Columns, Object, ObjectIterator, Row, Rows, Segment}, themes::Colorization, Alignment, Border, Color, Panel, Style, Width}};
+use tabled::{builder::Builder, settings::{object::{Cell, Columns, Rows, Segment}, themes::Colorization, Alignment, Border, Color, Style}};
 
 mod y2015;
 mod y2024;
