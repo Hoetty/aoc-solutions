@@ -1,8 +1,6 @@
 use std::fs;
 
-use tabled::{builder::Builder, settings::{object::{Columns, Rows, Segment}, Alignment, Panel, Style}, Table};
-
-use crate::time;
+use tabled::{builder::Builder, settings::{object::{Columns, Rows, Segment}, Alignment, Panel, Style}};
 
 pub mod day1;
 pub mod day2;
@@ -22,6 +20,7 @@ pub mod day15;
 pub mod day16;
 pub mod day17;
 pub mod day18;
+pub mod day19;
 
 pub fn solve_all() {
 
@@ -44,6 +43,7 @@ pub fn solve_all() {
         day16::solutions(),
         day17::solutions(),
         day18::solutions(),
+        day19::solutions(),
     ];
 
     let total_time: f64 = solutions.iter().map(|s| s.time_1 + s.time_2).sum::<u128>() as f64 / 1000.0;
