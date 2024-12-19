@@ -190,28 +190,3 @@ fn solve_second(input: Map) -> u64 {
         input.step(1);
     }
 }
-
-#[cfg(test)]
-mod tests {
-    const TEST_DIMENSION: (i64, i64) = (101, 103);
-
-    use super::*;
-
-    fn expected() -> (u64, u64) {
-        let file = fs::read_to_string("test-inputs/2024/day14-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2024/day14.txt", TEST_DIMENSION));
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2024/day14.txt", TEST_DIMENSION));
-        assert_eq!(result, expected().1);
-    }
-}

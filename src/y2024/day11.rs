@@ -81,26 +81,3 @@ fn solve_second(input: Vec<u64>) -> u64 {
         .map(|num| mutations(*num, 75, &mut FxHashMap::with_capacity_and_hasher(4096, BuildHasherDefault::default())))
         .sum()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn expected() -> (u64, u64) {
-        let file = fs::read_to_string("test-inputs/2024/day11-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2024/day11.txt"));
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2024/day11.txt"));
-        assert_eq!(result, expected().1);
-    }
-}

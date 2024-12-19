@@ -232,26 +232,3 @@ fn possibilities(target: Pattern, patterns: &Vec<Pattern>, cache: &mut FxHashMap
 fn solve_second(input: (Vec<Pattern>, Vec<Pattern>)) -> u64 {
     input.1.iter().map(|target| possibilities(*target, &input.0, &mut FxHashMap::default())).sum()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn expected() -> (usize, u64) {
-        let file = fs::read_to_string("test-inputs/2024/day19-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2024/day19.txt"));
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2024/day19.txt"));
-        assert_eq!(result, expected().1);
-    }
-}

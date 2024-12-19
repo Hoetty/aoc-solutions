@@ -1,6 +1,4 @@
-use std::fs;
-
-use tabled::{builder::Builder, settings::{object::{Columns, Rows, Segment}, Alignment, Panel, Style}};
+use crate::year;
 
 pub mod day1;
 pub mod day2;
@@ -22,9 +20,8 @@ pub mod day17;
 pub mod day18;
 pub mod day19;
 
-pub fn solve_all() {
-
-    let solutions = vec![
+pub fn solve_all() -> String {
+    year("2024", vec![
         day1::solutions(),
         day2::solutions(),
         day3::solutions(),
@@ -44,30 +41,5 @@ pub fn solve_all() {
         day17::solutions(),
         day18::solutions(),
         day19::solutions(),
-    ];
-
-    let total_time: f64 = solutions.iter().map(|s| s.time_1 + s.time_2).sum::<u128>() as f64 / 1000.0;
-
-    let mut builder = Builder::default();
-
-    for solution in solutions {
-        builder.push_record([&solution.name, "#1", &format!("{:?}", solution.solution_1), &format!("{}ms", solution.time_1 as f64 / 1000.0), &format!("{:.2}%", solution.time_1 as f64 / 10.0 / total_time)]);
-        builder.push_record(["", "#2", &format!("{:?}", solution.solution_2), &format!("{}ms", solution.time_2 as f64 / 1000.0), &format!("{:.2}%", solution.time_2 as f64 / 10.0 / total_time)]);
-        builder.push_record(["", "T", "", &format!("{}ms", (solution.time_1 + solution.time_2) as f64 / 1000.0), &format!("{:.2}%", (solution.time_1 + solution.time_2) as f64 / 10.0 / total_time)]);
-        builder.push_record([""]);
-    }
-
-    let table = builder.build()
-            .with(Panel::header("Year 2024"))
-            .with(Panel::footer(format!("Total Time: {total_time}ms")))
-            .with(Style::sharp())
-            .modify(Segment::all(), Alignment::right())
-            .modify(Rows::first(), Alignment::center())
-            .modify(Rows::last(), Alignment::center())
-            .modify(Columns::single(2), Alignment::center())
-            .to_string();
-
-    println!("{table}");
-    fs::write("output.txt", format!("{table}")).unwrap();
-    
+    ])    
 }

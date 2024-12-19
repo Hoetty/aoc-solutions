@@ -70,7 +70,7 @@ fn solve_first(input: Vec<(u8, u8)>, dimensions: (usize, usize)) -> i64 {
     solve_n(1024, &input, dimensions)
 }
 
-fn solve_second(input: Vec<(u8, u8)>, dimensions: (usize, usize)) -> (u8, u8) {
+fn solve_second(input: Vec<(u8, u8)>, dimensions: (usize, usize)) -> String {
     let mut bottom = 0;
     let mut top = dimensions.0 * dimensions.1;
 
@@ -85,29 +85,7 @@ fn solve_second(input: Vec<(u8, u8)>, dimensions: (usize, usize)) -> (u8, u8) {
         }
     }
 
-    input[bottom]
-}
+    let coord = input[bottom];
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn expected() -> (i64, (u8, u8)) {
-        let file = fs::read_to_string("test-inputs/2024/day18-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        let (l, r) = nums[1].split_once(",").unwrap();
-        (nums[0].parse().unwrap(), (l.parse().unwrap(), r.parse().unwrap()))
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2024/day18.txt"), DIMENSIONS);
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2024/day18.txt"), DIMENSIONS);
-        assert_eq!(result, expected().1);
-    }
+    format!("{},{}", coord.0, coord.1)
 }
