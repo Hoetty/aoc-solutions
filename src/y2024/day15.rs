@@ -1,9 +1,15 @@
 use std::{collections::HashSet, fs::{self}};
 
-pub fn solutions() {
-    let input = get_input("inputs/2024/day15.txt",);
-    println!("2024 Day 15 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 15 #2: {}", solve_second(input));
+use crate::Solution;
+
+pub fn solutions() -> Solution {
+    let input = get_input("inputs/2024/day15.txt");
+
+    Solution::evaluated(
+        "Day 15".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]

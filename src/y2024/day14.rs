@@ -1,12 +1,18 @@
 use std::{fs::{self, OpenOptions}, io::Write};
 
+use crate::Solution;
+
 const DIMENSION: (i64, i64) = (101, 103);
 const TREE_THRESHOLD: f64 = 700.0;
 
-pub fn solutions() {
+pub fn solutions() -> Solution {
     let input = get_input("inputs/2024/day14.txt", DIMENSION);
-    println!("2024 Day 14 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 14 #2: {}", solve_second(input));
+
+    Solution::evaluated(
+        "Day 14".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]

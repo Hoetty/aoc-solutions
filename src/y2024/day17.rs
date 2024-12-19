@@ -1,10 +1,16 @@
 use std::{collections::VecDeque, fs::{self}, u64};
 
+use crate::Solution;
 
-pub fn solutions() {
-    let input = get_input("inputs/2024/day17.txt",);
-    println!("2024 Day 17 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 17 #2: {}", solve_second(input));
+
+pub fn solutions() -> Solution {
+    let input = get_input("inputs/2024/day17.txt");
+
+    Solution::evaluated(
+        "Day 17".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 

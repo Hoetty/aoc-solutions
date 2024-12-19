@@ -1,11 +1,17 @@
 use std::{collections::VecDeque, fs::{self}};
 
+use crate::Solution;
+
 const DIMENSIONS: (usize, usize) = (71, 71);
 
-pub fn solutions() {
-    let input = get_input("inputs/2024/day18.txt",);
-    println!("2024 Day 18 #1: {}", solve_first(input.clone(), DIMENSIONS));
-    println!("2024 Day 18 #2: {:?}", solve_second(input, DIMENSIONS));
+pub fn solutions() -> Solution {
+    let input = get_input("inputs/2024/day18.txt");
+
+    Solution::evaluated(
+        "Day 18".to_owned(), 
+        &|| solve_first(input.clone(), DIMENSIONS),
+        &|| solve_second(input.clone(), DIMENSIONS)
+    )
 }
 
 

@@ -2,10 +2,16 @@ use std::{fs, hash::BuildHasherDefault};
 
 use fxhash::FxHashMap;
 
-pub fn solutions() {
+use crate::Solution;
+
+pub fn solutions() -> Solution {
     let input = get_input("inputs/2024/day11.txt");
-    println!("2024 Day 11 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 11 #2: {}", solve_second(input));
+
+    Solution::evaluated(
+        "Day 11".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 fn get_input(file: &'static str) -> Vec<u64> {

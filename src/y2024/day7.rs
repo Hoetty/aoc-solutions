@@ -1,9 +1,15 @@
 use std::fs;
 
-pub fn solutions() {
+use crate::Solution;
+
+pub fn solutions() -> Solution {
     let input = get_input("inputs/2024/day7.txt");
-    println!("2024 Day 7 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 7 #2: {}", solve_second(input));
+
+    Solution::evaluated(
+        "Day 7".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 fn get_input(file: &'static str) -> Vec<(i64, Vec<i64>)> {

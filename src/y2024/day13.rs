@@ -1,9 +1,15 @@
 use std::fs;
 
-pub fn solutions() {
+use crate::Solution;
+
+pub fn solutions() -> Solution {
     let input = get_input("inputs/2024/day13.txt");
-    println!("2024 Day 13 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 13 #2: {}", solve_second(input));
+
+    Solution::evaluated(
+        "Day 13".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 const LEN_A: usize = "Button A: X+".len();

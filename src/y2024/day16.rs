@@ -2,10 +2,16 @@ use std::{collections::HashSet, fs::{self}, rc::Rc};
 
 use fxhash::FxHashSet;
 
-pub fn solutions() {
-    let input = get_input("inputs/2024/day16.txt",);
-    println!("2024 Day 16 #1: {}", solve_first(input.clone()));
-    println!("2024 Day 16 #2: {}", solve_second(input));
+use crate::Solution;
+
+pub fn solutions() -> Solution {
+    let input = get_input("inputs/2024/day16.txt");
+
+    Solution::evaluated(
+        "Day 16".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 #[derive(Clone)]
