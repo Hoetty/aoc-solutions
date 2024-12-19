@@ -1,9 +1,15 @@
 use std::fs;
 
-pub fn solutions() {
+use crate::Solution;
+
+pub fn solutions() -> Solution {
     let input = get_input("inputs/2015/day6.txt");
-    println!("2015 Day 6 #1: {}", solve_first(input.clone()));
-    println!("2015 Day 6 #2: {}", solve_second(input));
+
+    Solution::evaluated(
+        "Day 6".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 const TURN_ON: &str = "turn on";

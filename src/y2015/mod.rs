@@ -1,4 +1,4 @@
-use crate::time;
+use crate::year;
 
 pub mod day1;
 pub mod day2;
@@ -8,11 +8,13 @@ pub mod day5;
 pub mod day6;
 
 #[allow(dead_code)]
-pub fn solve_all() {
-    // time("Day 1", &day1::solutions);
-    // time("Day 2", &day2::solutions);
-    // time("Day 3", &day3::solutions);
-    // time("Day 4", &day4::solutions);
-    // time("Day 5", &day5::solutions);
-    // time("Day 6", &day6::solutions);
+pub fn solve_all() -> String {
+    year("2015", vec![
+        day1::solutions(),
+        day2::solutions(),
+        day3::solutions(),
+        day4::solutions(),
+        day5::solutions(),
+        day6::solutions(),
+    ])    
 }

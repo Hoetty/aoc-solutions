@@ -1,9 +1,15 @@
 use std::{collections::HashSet, fs};
 
-pub fn solutions() {
+use crate::Solution;
+
+pub fn solutions() -> Solution {
     let input = get_input("inputs/2015/day3.txt");
-    println!("2015 Day 3 #1: {}", solve_first(input.clone()));
-    println!("2015 Day 3 #2: {}", solve_second(input));
+
+    Solution::evaluated(
+        "Day 3".to_owned(), 
+        &|| solve_first(input.clone()),
+        &|| solve_second(input.clone())
+    )
 }
 
 pub fn get_input(file: &'static str) -> String {
