@@ -150,22 +150,29 @@ fn string_to_num(pattern: &str) -> Pattern {
     Pattern(num, i)
 }
 
-fn get_input(file: &'static str) -> (Vec<Pattern>, Vec<Pattern>) {
+fn get_input(file: &'static str) -> (Vec<Vec<Pattern>>, Vec<Pattern>) {
     let file = fs::read_to_string(file).expect("No file there");
     let (first, second) = file.split_once("\n\n").unwrap();
 
+    let mut patterns: Vec<Vec<Pattern>> = Vec::new();
+    patterns.resize(6, Vec::new());
+
+    for pattern in first.split(", ").map(&string_to_num) {
+        patterns[(pattern.0.0[1] & 7) as usize].push(pattern);
+    }
+
     (
-        first.split(", ").map(&string_to_num).collect(),
+        patterns,
         second.lines().map(&string_to_num).collect()
     )
 }
 
-fn is_possible(target: Pattern, patterns: &Vec<Pattern>, cache: &mut FxHashMap<Pattern, bool>) -> bool {
+fn is_possible(target: Pattern, patterns: &Vec<Vec<Pattern>>, cache: &mut FxHashMap<Pattern, bool>) -> bool {
     if let Some(v) = cache.get(&target) {
         return *v;
     }
 
-    for pattern in patterns {
+    for pattern in &patterns[(target.0.0[1] & 7) as usize] {
         if pattern.1 > target.1 {
             continue;
         }
@@ -193,18 +200,18 @@ fn is_possible(target: Pattern, patterns: &Vec<Pattern>, cache: &mut FxHashMap<P
     false
 }
 
-fn solve_first(input: (Vec<Pattern>, Vec<Pattern>)) -> usize {
+fn solve_first(input: (Vec<Vec<Pattern>>, Vec<Pattern>)) -> usize {
     input.1.iter().filter(|target| is_possible(**target, &input.0, &mut FxHashMap::default())).count()
 }
 
-fn possibilities(target: Pattern, patterns: &Vec<Pattern>, cache: &mut FxHashMap<Pattern, u64>) -> u64 {
+fn possibilities(target: Pattern, patterns: &Vec<Vec<Pattern>>, cache: &mut FxHashMap<Pattern, u64>) -> u64 {
     if let Some(v) = cache.get(&target) {
         return *v;
     }
 
     let mut found = 0;
 
-    for pattern in patterns {
+    for pattern in &patterns[(target.0.0[1] & 7) as usize] {
         if pattern.1 > target.1 {
             continue;
         }
@@ -229,6 +236,6 @@ fn possibilities(target: Pattern, patterns: &Vec<Pattern>, cache: &mut FxHashMap
     found
 }
 
-fn solve_second(input: (Vec<Pattern>, Vec<Pattern>)) -> u64 {
+fn solve_second(input: (Vec<Vec<Pattern>>, Vec<Pattern>)) -> u64 {
     input.1.iter().map(|target| possibilities(*target, &input.0, &mut FxHashMap::default())).sum()
 }
