@@ -77,7 +77,9 @@ fn number_of_presses(sequence: u32, start: u8, depth: u8, cache: &mut FxHashMap<
         return 1;
     }
 
-    if let Some(v) = cache.get(&(sequence, start, depth)) {
+    let key = (sequence, start, depth);
+
+    if let Some(v) = cache.get(&key) {
         return *v;
     }
 
@@ -154,7 +156,7 @@ fn number_of_presses(sequence: u32, start: u8, depth: u8, cache: &mut FxHashMap<
         position = target;
     }
 
-    cache.insert((sequence, start, depth), count);
+    cache.insert(key, count);
 
     count
 }

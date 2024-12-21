@@ -119,11 +119,14 @@ fn solve_second(input: Maze) -> usize {
         tiles[pos] = distance;
         
         {
-            let min_dx = (-((pos % input.width) as isize)).max(-CHEAT_DISTANCE);
-            let min_dy = (-((pos / input.width) as isize)).max(-CHEAT_DISTANCE);
+            let middle_x = pos % input.width;
+            let middle_y = pos / input.width;
 
-            let max_dx = (input.width - (pos % input.width) - 1).min(CHEAT_DISTANCE as usize) as isize;
-            let max_dy = (height - (pos / input.width) - 1).min(CHEAT_DISTANCE as usize) as isize;
+            let min_dx = (-(middle_x as isize)).max(-CHEAT_DISTANCE);
+            let min_dy = (-(middle_y as isize)).max(-CHEAT_DISTANCE);
+
+            let max_dx = (input.width - middle_x - 1).min(CHEAT_DISTANCE as usize) as isize;
+            let max_dy = (height - middle_y - 1).min(CHEAT_DISTANCE as usize) as isize;
 
             for x in min_dx..=max_dx {
                 let x_abs = x.abs();
