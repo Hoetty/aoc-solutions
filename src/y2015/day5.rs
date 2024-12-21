@@ -23,7 +23,7 @@ fn is_vowel(c: char) -> bool {
     c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'
 }
 
-fn is_nice(input: &String) -> bool {
+fn is_nice(input: &str) -> bool {
     let mut vowels = 0;
     let mut double = false;
 
@@ -60,10 +60,10 @@ fn is_nice(input: &String) -> bool {
 }
 
 pub fn solve_first(input: Vec<String>) -> usize {
-    input.iter().filter(|s| is_nice(*s)).count()
+    input.iter().filter(|s| is_nice(s)).count()
 }
 
-fn is_nice2(input: &String) -> bool {
+fn is_nice2(input: &str) -> bool {
     let charlist = input.chars().collect::<Vec<char>>();
     let mut pairs: FxHashSet<(char, char)> = FxHashSet::with_capacity_and_hasher(32, BuildHasherDefault::default());
     let mut double = false;
@@ -93,7 +93,7 @@ fn is_nice2(input: &String) -> bool {
 }
 
 pub fn solve_second(input: Vec<String>) -> usize {
-    input.iter().filter(|s| is_nice2(*s)).count()
+    input.iter().filter(|s| is_nice2(s)).count()
 }
 
 #[cfg(test)]

@@ -34,7 +34,7 @@ pub fn solve_second(input: Vec<(i32, i32, i32)>) -> i32 {
     let mut sum = 0;
 
     for present in input {
-        let mut ordered = vec![present.0, present.1, present.2];
+        let mut ordered = [present.0, present.1, present.2];
         ordered.sort();
 
         sum += present.0 * present.1 * present.2 + 2 * ordered[0] + 2 * ordered[1];

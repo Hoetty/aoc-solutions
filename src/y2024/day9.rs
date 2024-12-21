@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, fs, usize};
+use std::{collections::VecDeque, fs};
 
 use crate::Solution;
 

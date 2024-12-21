@@ -46,7 +46,7 @@ fn solve_second(input: List) -> i32 {
 
     for num in second {
         match frequency.get_mut(&num) {
-            Some(count) => { *count = *count + 1; },
+            Some(count) => { *count += 1; },
             None => { frequency.insert(num, 1); }
         }
     }

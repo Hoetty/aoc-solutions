@@ -90,23 +90,21 @@ fn solve_first(input: Vec<Command>) -> usize {
 
 fn solve_second(input: Vec<Command>) -> usize {
     let mut lit: usize = 0;
-    let command_length = input.len();
 
     for x in 0..1000 {
         for y in 0..1000 {
             let mut brightness = 0;
 
-            for i in 0..command_length {
-                let command = input[i];
+            for command in &input {
                 match command {
-                    Command::Set(value, first, second) if in_area((x, y), first, second) => {
-                        if value == 1 {
+                    Command::Set(value, first, second) if in_area((x, y), *first, *second) => {
+                        if *value == 1 {
                             brightness += 1;
                         } else if brightness > 0 {
                             brightness -= 1;
                         }
                     },
-                    Command::Toggle(first, second) if in_area((x, y), first, second) => brightness += 2,
+                    Command::Toggle(first, second) if in_area((x, y), *first, *second) => brightness += 2,
                     _ => { }
                 }
             }

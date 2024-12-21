@@ -19,7 +19,7 @@ fn get_input(file: &'static str) -> Vec<(u8, u8)> {
     fs::read_to_string(file).expect("No file there").lines().map(|l| l.split_once(",").unwrap()).map(|(l, r)| (l.parse().unwrap(), r.parse().unwrap())).collect()
 }
 
-fn solve_n(n: usize, input: &Vec<(u8, u8)>, dimensions: (usize, usize)) -> i64
+fn solve_n(n: usize, input: &[(u8, u8)], dimensions: (usize, usize)) -> i64
 {
     let mut tiles = Vec::from([0]);
     tiles.resize(dimensions.0 * dimensions.1, i64::MAX);

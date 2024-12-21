@@ -88,5 +88,5 @@ fn solve_second(input: (Rules, Orders)) -> i32 {
         }
     }
 
-    return sum as i32;
+    sum as i32
 }

@@ -101,13 +101,13 @@ impl Map {
 
         fs::remove_file("dump.txt").unwrap();
 
-        let mut file = OpenOptions::new().create(true).write(true).append(true).open("dump.txt").unwrap();
+        let mut file = OpenOptions::new().create(true).append(true).open("dump.txt").unwrap();
 
         for y in 0..self.dimension.1 {
             for x in 0..self.dimension.0 {
                 write!(file, "{}", grid[x as usize][y as usize]).unwrap();
             }
-            write!(file, "\n").unwrap();
+            writeln!(file).unwrap();
         }
     }
 }

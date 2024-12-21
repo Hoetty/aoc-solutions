@@ -56,7 +56,7 @@ fn solve_first(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
         let mut heads: FxHashSet<Spot> = FxHashSet::with_capacity_and_hasher(10, BuildHasherDefault::default());
         let mut queue = VecDeque::from([base]);
 
-        while queue.len() > 0 {
+        while !queue.is_empty() {
             let current = queue.pop_front().unwrap();
             let value = map[current.y as usize][current.x as usize];
 
@@ -98,7 +98,7 @@ fn solve_second(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
     for base in starting {
         let mut queue = VecDeque::from([base]);
 
-        while queue.len() > 0 {
+        while !queue.is_empty() {
             let current = queue.pop_front().unwrap();
             let value = map[current.y as usize][current.x as usize];
 

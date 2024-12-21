@@ -43,7 +43,7 @@ fn get_input(file: &'static str) -> Map {
                 'O' => Tile::Box,
                 '#' => Tile::Obstacle,
                 '@' => {
-                    robot_position = Some((y * line.len() + x) as usize);
+                    robot_position = Some(y * line.len() + x);
                     Tile::Robot
                 },
                 _ => panic!("Unknown char {:?}", c)
@@ -166,10 +166,10 @@ fn do_move(position: usize, direction: isize, tiles: &mut Vec<WideTile>, moved: 
 }
 
 #[allow(unused)]
-fn dump_map(tiles: &Vec<WideTile>, width: usize) {
+fn dump_map(tiles: &[WideTile], width: usize) {
     for (i, tile) in tiles.iter().enumerate() {
         if i % width == 0 {
-            print!("\n");
+            println!();
         }
 
         print!("{}", match tile {

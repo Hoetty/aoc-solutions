@@ -26,11 +26,11 @@ struct Point(i16, i16);
 
 impl Point {
     pub fn new(x: i16, y: i16) -> Point {
-        return Point(x, y);
+        Point(x, y)
     }
 
     pub fn rotate_right(&self) -> Point {
-        return Point::new(-self.1, self.0);
+        Point::new(-self.1, self.0)
     }
 }
 
@@ -38,7 +38,7 @@ impl Add for Point {
     type Output = Point;
 
     fn add(self, rhs: Self) -> Self::Output {
-        return Point::new(self.0 + rhs.0, self.1 + rhs.1);
+        Point::new(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
 
@@ -46,7 +46,7 @@ impl Sub for Point {
     type Output = Point;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        return Point::new(self.0 - rhs.0, self.1 - rhs.1);
+        Point::new(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
 
@@ -56,13 +56,13 @@ struct StealthDirection(Point, Point);
 
 impl Hash for StealthDirection {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        return self.0.hash(state);
+        self.0.hash(state)
     }
 }
 
 impl PartialEq for StealthDirection {
     fn eq(&self, other: &Self) -> bool {
-        return self.0 == other.0;
+        self.0 == other.0
     }
 }
 
@@ -96,10 +96,10 @@ fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&
                     };
                 }
             }
-            return match obstacle {
+            match obstacle {
                 Some(p) if p.0 == start.0 && p.1 > start.1 => Some(Point(p.0, p.1 - 1)),
                 _ => { None }
-            };
+            }
         },
         Point(0, -1) => {
             for y in map.obstacles_x[start.0 as usize].iter().rev() {
@@ -110,10 +110,10 @@ fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&
                     };
                 }
             }
-            return match obstacle {
+            match obstacle {
                 Some(p) if p.0 == start.0 && p.1 < start.1 => Some(Point(p.0, p.1 + 1)),
                 _ => { None }
-            };
+            }
         },
         Point(1, 0) => {
             for x in &map.obstacles_y[start.1 as usize] {
@@ -124,10 +124,10 @@ fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&
                     };
                 }
             }
-            return match obstacle {
+            match obstacle {
                 Some(p) if p.1 == start.1 && p.0 > start.0 => Some(Point(p.0 - 1, p.1)),
                 _ => { None }
-            };
+            }
         },
         Point(-1, 0) => {
             for x in map.obstacles_y[start.1 as usize].iter().rev() {
@@ -138,10 +138,10 @@ fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&
                     };
                 }
             }
-            return match obstacle {
+            match obstacle {
                 Some(p) if p.1 == start.1 && p.0 < start.0 => Some(Point(p.0 + 1, p.1)),
                 _ => { None }
-            };
+            }
         },
         _ => panic!()
     }
@@ -179,14 +179,14 @@ fn get_input(file: &'static str) -> (Point, Map) {
         }
     }
 
-    return (
+    (
         starting.unwrap(),
         Map {
             dimensions: Point::new(width as i16, height as i16),
             obstacles_x,
             obstacles_y
         }
-    );
+    )
 }
 
 fn solve_first(input: (Point, Map)) -> i32 {

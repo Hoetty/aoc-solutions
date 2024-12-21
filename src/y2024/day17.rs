@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, fs::{self}, u64};
+use std::{collections::VecDeque, fs::{self}};
 
 use crate::Solution;
 
@@ -56,12 +56,12 @@ fn solve_first(input: ((u64, u64, u64), Vec<u8>)) -> String {
 
         match current_instruction {
             0 => a = a >> combo(opcode, a, b, c),
-            1 => b = b ^ opcode as u64,
+            1 => b ^= opcode as u64,
             2 => b = combo(opcode, a, b, c) & 0b111,
             3 => if a != 0 {
                 ip = opcode as usize
             },
-            4 => b = b ^ c,
+            4 => b ^= c,
             5 => output.push((combo(opcode, a, b, c) & 0b111) as u8),
             6 => b = a >> combo(opcode, a, b, c),
             7 => c = a >> combo(opcode, a, b, c),
@@ -81,7 +81,7 @@ fn solve_first(input: ((u64, u64, u64), Vec<u8>)) -> String {
     result
 }
 
-fn bytes_num(nums: &Vec<u8>) -> u64 {
+fn bytes_num(nums: &[u8]) -> u64 {
     let mut carry: u64 = 0;
 
     for (i, num) in nums.iter().enumerate() {
@@ -132,12 +132,12 @@ fn solve_second(input: ((u64, u64, u64), Vec<u8>)) -> u64 {
         
                 match current_instruction {
                     0 => a = a >> combo(opcode, a, b, c),
-                    1 => b = b ^ opcode as u64,
+                    1 => b ^= opcode as u64,
                     2 => b = combo(opcode, a, b, c) & 0b111,
                     3 => if a != 0 {
                         ip = opcode as usize
                     },
-                    4 => b = b ^ c,
+                    4 => b ^= c,
                     5 => output.push((combo(opcode, a, b, c) & 0b111) as u8),
                     6 => b = a >> combo(opcode, a, b, c),
                     7 => c = a >> combo(opcode, a, b, c),

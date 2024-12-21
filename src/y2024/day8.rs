@@ -22,7 +22,7 @@ impl Vector2 {
     // }
 
     fn scaled(&self, scale: i32) -> Vector2 {
-        return Vector2::new(self.x * scale, self.y * scale);
+        Vector2::new(self.x * scale, self.y * scale)
     }
 }
 

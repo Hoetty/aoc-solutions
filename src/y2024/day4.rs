@@ -23,8 +23,8 @@ fn solve_first(input: Vec<Vec<char>>) -> i32 {
     for y in 0..height {
         for x in 0..width {
             if input[y as usize][x as usize] == 'X' {
-                for dy in (-1 as i32)..=1 {
-                    for dx in (-1 as i32)..=1 {
+                for dy in -1..=1 {
+                    for dx in -1..=1 {
                         if x + 3 * dx >= 0 && x + 3 * dx < width 
                             && y + 3 * dy >= 0 && y + 3 * dy < height
                             && input[(y + dy) as usize][(x + dx) as usize] == 'M'

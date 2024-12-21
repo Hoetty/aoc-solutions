@@ -34,7 +34,7 @@ fn solve_second(input: List) -> i32 {
         .map(|report| (report, report.windows(2).map(|a| a[0] - a[1])))
         .filter(|(_, diffs)| (!diffs.clone().all(|diff| diff.is_negative()) && !diffs.clone().all(|diff| diff.is_positive())) || !diffs.clone().all(|diff| diff != 0 && diff.abs() <= 3))
         .map(|(report, _)| report)
-        .map(|v| v.clone())
+        .cloned()
         .collect();
 
     let mut bad_count = bad.len();
@@ -55,5 +55,5 @@ fn solve_second(input: List) -> i32 {
         }
     }
 
-    return (count_all - bad_count) as i32;
+    (count_all - bad_count) as i32
 }

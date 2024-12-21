@@ -15,7 +15,7 @@ pub fn solutions() -> Solution {
 }
 
 fn get_input(file: &'static str) -> String {
-    return fs::read_to_string(file).expect("No file there");
+    fs::read_to_string(file).expect("No file there")
 }
 
 fn solve_first(input: String) -> i32 {

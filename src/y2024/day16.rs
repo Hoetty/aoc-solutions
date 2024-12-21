@@ -52,7 +52,7 @@ fn get_input(file: &'static str) -> Maze {
 }
 
 fn right(direction: isize, width: usize) -> isize {
-    match direction as isize {
+    match direction {
         1 => width as isize,
         _ if direction == width as isize => -1,
         -1 => -(width as isize),
@@ -248,7 +248,7 @@ fn solve_second(input: Maze) -> usize {
             }
         }
 
-        if let Some(_) = found {
+        if found.is_some() {
             let mut path_tiles: FxHashSet<usize> = HashSet::default();
 
             for path in paths {

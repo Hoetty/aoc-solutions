@@ -16,7 +16,9 @@ const LEN_A: usize = "Button A: X+".len();
 const LEN_B: usize = "Button B: X+".len();
 const LEN_P: usize = "Prize: X=".len();
 
-fn get_input(file: &'static str) -> Vec<((u64, u64), (u64, u64), (u64, u64))> {
+type MachineLayout = ((u64, u64), (u64, u64), (u64, u64)); 
+
+fn get_input(file: &'static str) -> Vec<MachineLayout> {
     fs::read_to_string(file).expect("No file there").split_terminator("\n\n").map(|block| {
         let split: Vec<&str> = block.split_terminator("\n").collect();
         let (ax, ay) = split[0][LEN_A..].split_once(", Y+").unwrap();
@@ -32,7 +34,7 @@ fn is_integer(num: f64) -> bool {
     (num - num.round()).abs() < 0.001
 }
 
-fn solve_first(input: Vec<((u64, u64), (u64, u64), (u64, u64))>) -> u64 {
+fn solve_first(input: Vec<MachineLayout>) -> u64 {
     input.iter().map(|((ax, ay), (bx, by), (px, py))| {
         let ((ax, ay), (bx, by), (px, py)) = ((*ax as f64, *ay as f64), (*bx as f64, *by as f64), (*px as f64, *py as f64));
         
@@ -66,7 +68,7 @@ fn solve_first(input: Vec<((u64, u64), (u64, u64), (u64, u64))>) -> u64 {
     }).sum()
 }
 
-fn solve_second(input: Vec<((u64, u64), (u64, u64), (u64, u64))>) -> u64 {
+fn solve_second(input: Vec<MachineLayout>) -> u64 {
     input.iter().map(|((ax, ay), (bx, by), (px, py))| {
         let ((ax, ay), (bx, by), (px, py)) = ((*ax as f64, *ay as f64), (*bx as f64, *by as f64), (*px as f64 + 10000000000000.0, *py as f64 + 10000000000000.0));
         

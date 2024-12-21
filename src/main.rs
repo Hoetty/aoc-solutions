@@ -37,7 +37,7 @@ pub fn time<T>(function: &dyn Fn() -> T) -> (T, u128) {
     let start = Instant::now();
     let value = function();
     let elapsed = start.elapsed().as_micros();
-    return (value, elapsed);
+    (value, elapsed)
 }
 
 pub fn format_time(time: u128) -> String {
@@ -48,12 +48,12 @@ pub fn format_percentage(time: u128, total: u128) -> String {
     format!("{:.2}%", time as f64 / total as f64 * 100.0)
 }
 
-pub fn format_solution(solution: &Box<dyn Display>) -> String {
+pub fn format_solution(solution: &dyn Display) -> String {
     format!("{}", solution)
 }
 
 pub fn format_test(passed: bool) -> String {
-    return if passed {
+    if passed {
         "✔".to_string()
     } else {
         "✘".to_string()
@@ -119,7 +119,7 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
 }
 
 fn main() {
-    let years = vec![
+    let years = [
         // y2015::solve_all(),
         y2024::solve_all()
     ];

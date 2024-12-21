@@ -1,4 +1,4 @@
-use std::{fs, hash::BuildHasherDefault, u32};
+use std::{fs, hash::BuildHasherDefault};
 
 use fxhash::FxHashMap;
 
@@ -88,7 +88,7 @@ fn number_of_presses(sequence: u32, start: u8, depth: u8, cache: &mut FxHashMap<
 
     for item in (0..8).rev() {
 
-        let target = ((sequence >> item * 4) & BUTTON as u32) as u8;
+        let target = ((sequence >> (item * 4)) & BUTTON as u32) as u8;
 
         if target & X == X_POISON {
             continue;

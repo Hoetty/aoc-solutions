@@ -1,4 +1,4 @@
-use std::{fs::{self}, ops::{BitAnd, BitOr, BitXor, Shl, Shr}, u128};
+use std::{fs::{self}, ops::{BitAnd, BitOr, BitXor, Shl, Shr}};
 
 use fxhash::FxHashMap;
 
@@ -27,12 +27,10 @@ impl U256 {
             } else {
                 U256([0, self.0[1] - 1])
             }
+        } else if self.0[1] == 0 {
+            U256([self.0[0] - 1, u128::MAX])
         } else {
-            if self.0[1] == 0 {
-                U256([self.0[0] - 1, u128::MAX])
-            } else {
-                U256([0, self.0[1] - 1])
-            }
+            U256([0, self.0[1] - 1])
         }
     }
 }
@@ -143,7 +141,7 @@ fn string_to_num(pattern: &str) -> Pattern {
             'r' => RED,
             'g' => GREEN,
             _ => panic!("Unkown char {c}")
-        } << SHIFT * i);
+        } << (SHIFT * i));
         i += 1;
     }
 
@@ -184,7 +182,7 @@ fn is_possible(target: Pattern, patterns: &Vec<Vec<Pattern>>, cache: &mut FxHash
             return true;
         }
 
-        let tested_bits = (U256::ONE << pattern.1 * SHIFT).decremented();
+        let tested_bits = (U256::ONE << (pattern.1 * SHIFT)).decremented();
 
         if wrong & tested_bits == U256::ZERO {
             let next = Pattern(target.0 >> (pattern.1 * SHIFT), target.1 - pattern.1);
@@ -222,7 +220,7 @@ fn possibilities(target: Pattern, patterns: &Vec<Vec<Pattern>>, cache: &mut FxHa
             found += 1;
         }
 
-        let tested_bits = (U256::ONE << pattern.1 * SHIFT).decremented();
+        let tested_bits = (U256::ONE << (pattern.1 * SHIFT)).decremented();
 
         if wrong & tested_bits == U256::ZERO {
             let next = Pattern(target.0 >> (pattern.1 * SHIFT), target.1 - pattern.1);

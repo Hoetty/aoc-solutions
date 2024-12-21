@@ -63,14 +63,14 @@ fn is_possible(target: i64, rest: &[i64]) -> bool {
             }
 
             let addable = is_addable(target, *x);
-            return addable.0 && is_possible(addable.1, xs);
+            addable.0 && is_possible(addable.1, xs)
         }
     }
 }
 
 fn solve_first(input: Vec<(i64, Vec<i64>)>) -> i64 {
     input.iter()
-        .map(|(target, operands)| (target, operands.iter().rev().map(|v| *v).collect::<Vec<i64>>()))
+        .map(|(target, operands)| (target, operands.iter().rev().copied().collect::<Vec<i64>>()))
         .filter(|(target, operands)| is_possible(**target, &operands[0..operands.len()]))
         .map(|(target, _)| target)
         .sum()
@@ -93,14 +93,14 @@ fn is_possible_with_concat(target: i64, rest: &[i64]) -> bool {
             }
 
             let addable = is_addable(target, *x);
-            return addable.0 && is_possible_with_concat(addable.1, xs);
+            addable.0 && is_possible_with_concat(addable.1, xs)
         }
     }
 }
 
 fn solve_second(input: Vec<(i64, Vec<i64>)>) -> i64 {
     input.iter()
-        .map(|(target, operands)| (target, operands.iter().rev().map(|v| *v).collect::<Vec<i64>>()))
+        .map(|(target, operands)| (target, operands.iter().rev().copied().collect::<Vec<i64>>()))
         .filter(|(target, operands)| is_possible_with_concat(**target, &operands[0..operands.len()]))
         .map(|(target, _)| target)
         .sum()

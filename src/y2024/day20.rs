@@ -89,13 +89,13 @@ fn solve_first(input: Maze) -> usize {
         distance += 1;
 
         if tiles[pos + 1] == u32::MAX {
-            pos = pos + 1;
+            pos += 1;
         } else if tiles[pos - 1] == u32::MAX {
-            pos = pos - 1;
+            pos -= 1;
         } else if tiles[pos + input.width] == u32::MAX {
-            pos = pos + input.width;
+            pos += input.width;
         } else if tiles[pos - input.width] == u32::MAX {
-            pos = pos - input.width;
+            pos -= input.width;
         } else {
             panic!();
         }
@@ -155,13 +155,13 @@ fn solve_second(input: Maze) -> usize {
         distance += 1;
 
         if tiles[pos + 1] == u32::MAX {
-            pos = pos + 1;
+            pos += 1;
         } else if tiles[pos - 1] == u32::MAX {
-            pos = pos - 1;
+            pos -= 1;
         } else if tiles[pos + input.width] == u32::MAX {
-            pos = pos + input.width;
+            pos += input.width;
         } else if tiles[pos - input.width] == u32::MAX {
-            pos = pos - input.width;
+            pos -= input.width;
         } else {
             panic!();
         }
