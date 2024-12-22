@@ -25,24 +25,30 @@ fn mix(lhs: u32, rhs: u32) -> u32 {
 
 #[inline(always)]
 fn prune(lhs: u32) -> u32 {
-    lhs & 16777215
+    lhs & 0xFFFFFF
+}
+
+#[inline]
+fn step_unpruned(secret: u32) -> u32 {
+    let step1 = prune(mix(secret << 6, secret));
+    let step2 = mix(step1 >> 5, step1);
+    mix(step2 << 11, step2)
 }
 
 #[inline]
 fn step(secret: u32) -> u32 {
-    let step1 = prune(mix(secret << 6, secret));
-    let step2 = mix(step1 >> 5, step1);
-    prune(mix(step2 << 11, step2))
+    prune(step_unpruned(secret))
 }
+
 
 fn step_n_times(secret: u32, n: usize) -> u32 {
     let mut secret = secret;
 
     for _ in 0..n {
-        secret = step(secret);
+        secret = step_unpruned(secret);
     }
 
-    secret
+    prune(secret)
 }
 
 fn solve_first(input: Vec<u32>) -> u64 {
@@ -68,11 +74,9 @@ impl Eq for Gain {
 
 }
 
-fn gains(secret: u32) -> FxHashSet<Gain> {
+fn gains(secret: u32, gains: &mut FxHashSet<Gain>) {
     let mut secret = secret;
     let mut sequence = (0, 0, 0, 0);
-
-    let mut gains = FxHashSet::with_capacity_and_hasher(2048, BuildHasherDefault::default());
 
     for i in 0..2000 {
         let next = step(secret);
@@ -88,15 +92,16 @@ fn gains(secret: u32) -> FxHashSet<Gain> {
             gains.insert(Gain(sequence, bananas as u8));
         }
     }
-
-    gains
 }
 
 fn solve_second(input: Vec<u32>) -> u32 {
     let mut scores: FxHashMap<(i8, i8, i8, i8), u32> = FxHashMap::with_capacity_and_hasher(2048, BuildHasherDefault::default());
 
+    let mut set: FxHashSet<Gain> = FxHashSet::with_capacity_and_hasher(2048, BuildHasherDefault::default());
+
     for num in input {
-        for gain in gains(num) {
+        gains(num, &mut set);
+        for gain in set.drain() {
             scores.entry(gain.0)
                 .and_modify(|v| *v += gain.1 as u32)
                 .or_insert(gain.1 as u32);
