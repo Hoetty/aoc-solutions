@@ -152,8 +152,7 @@ fn get_input(file: &'static str) -> (Vec<Vec<Pattern>>, Vec<Pattern>) {
     let file = fs::read_to_string(file).expect("No file there");
     let (first, second) = file.split_once("\n\n").unwrap();
 
-    let mut patterns: Vec<Vec<Pattern>> = Vec::new();
-    patterns.resize(6, Vec::new());
+    let mut patterns: Vec<Vec<Pattern>> = vec![Vec::new(); 6];
 
     for pattern in first.split(", ").map(&string_to_num) {
         patterns[(pattern.0.0[1] & 7) as usize].push(pattern);

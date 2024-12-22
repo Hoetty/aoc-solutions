@@ -21,8 +21,8 @@ fn get_input(file: &'static str) -> Vec<(u8, u8)> {
 
 fn solve_n(n: usize, input: &[(u8, u8)], dimensions: (usize, usize)) -> i64
 {
-    let mut tiles = Vec::from([0]);
-    tiles.resize(dimensions.0 * dimensions.1, i64::MAX);
+    let mut tiles = vec![i64::MAX; dimensions.0 * dimensions.1];
+    tiles[0] = 0;
     
     for &(x, y) in input.iter().take(n) {
         tiles[y as usize * dimensions.0 + x as usize] = -1;

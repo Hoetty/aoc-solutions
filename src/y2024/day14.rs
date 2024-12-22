@@ -87,13 +87,7 @@ impl Map {
 
     #[allow(unused)]
     fn dump(&self) {
-        let mut grid: Vec<Vec<u8>> = Vec::new();
-
-        grid.resize(self.dimension.0 as usize, Vec::new());
-
-        for x in 0..self.dimension.0 {
-            grid[x as usize].resize(self.dimension.1 as usize, 0);
-        }
+        let mut grid: Vec<Vec<u8>> = vec![vec![0; self.dimension.1 as usize]; self.dimension.0 as usize];
 
         for robot in &self.robots {
             grid[robot.0.0 as usize][robot.0.1 as usize] += 1;

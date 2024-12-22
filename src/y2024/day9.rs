@@ -68,8 +68,7 @@ fn solve_first(input: String) -> u64 {
 }
 
 fn solve_second(input: String) -> u64 {
-    let mut free_space: Vec<VecDeque<usize>> = Vec::new();
-    free_space.resize(10, VecDeque::new());
+    let mut free_space: Vec<VecDeque<usize>> = vec![VecDeque::new(); 10];
     let mut files: Vec<(u16, usize, u8)> = Vec::new();
     
     let mut id = 0;
