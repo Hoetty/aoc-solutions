@@ -72,7 +72,7 @@ fn gains(secret: u32) -> FxHashSet<Gain> {
     let mut secret = secret;
     let mut sequence = (0, 0, 0, 0);
 
-    let mut gains = FxHashSet::with_capacity_and_hasher(1024, BuildHasherDefault::default());
+    let mut gains = FxHashSet::with_capacity_and_hasher(2048, BuildHasherDefault::default());
 
     for i in 0..2000 {
         let next = step(secret);
@@ -93,24 +93,15 @@ fn gains(secret: u32) -> FxHashSet<Gain> {
 }
 
 fn solve_second(input: Vec<u32>) -> u32 {
-    let mut scores: FxHashMap<(i8, i8, i8, i8), u32> = FxHashMap::with_capacity_and_hasher(4096, BuildHasherDefault::default());
+    let mut scores: FxHashMap<(i8, i8, i8, i8), u32> = FxHashMap::with_capacity_and_hasher(2048, BuildHasherDefault::default());
 
     for num in input {
         for gain in gains(num) {
-            match scores.get_mut(&gain.0) {
-                Some(v) => *v += gain.1 as u32,
-                None => { scores.insert(gain.0, gain.1 as u32); },
-            }
+            scores.entry(gain.0)
+                .and_modify(|v| *v += gain.1 as u32)
+                .or_insert(gain.1 as u32);
         }
     }
 
-    let mut best = ((0, 0, 0, 0), 0);
-
-    for score in scores {
-        if score.1 > best.1 {
-            best = score;
-        }
-    }
-
-    best.1
+    *scores.values().max().unwrap()
 }
