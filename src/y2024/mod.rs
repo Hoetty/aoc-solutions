@@ -22,6 +22,7 @@ pub mod day19;
 pub mod day20;
 pub mod day21;
 pub mod day22;
+pub mod day23;
 
 pub fn solve_all() -> String {
     year("2024", vec![
@@ -47,5 +48,6 @@ pub fn solve_all() -> String {
         day20::solutions(),
         day21::solutions(),
         day22::solutions(),
+        day23::solutions(),
     ])    
 }
