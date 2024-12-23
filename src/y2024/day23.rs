@@ -69,7 +69,9 @@ fn bron_kerboschl(graph: &UnGraph<(), (), u16>, r: FxHashSet<NodeIndex<u16>>, p:
         let mut p = p;
         let mut x = x;
 
-        for node in p.clone().iter() {
+        let pivot = p.iter().next().unwrap_or_else(|| x.iter().next().unwrap());
+
+        for node in p.clone().difference(&FxHashSet::from_iter(graph.neighbors(*pivot))) {
             let neighbors = FxHashSet::from_iter(graph.neighbors(*node));
 
             let mut nr = r.clone();
