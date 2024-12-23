@@ -13,7 +13,7 @@ pub fn solutions() -> Solution {
 }
 
 fn get_input(file: &'static str) -> Vec<Vec<char>> {
-    return fs::read_to_string(file).expect("No file there").lines().map(|line| line.chars().collect()).collect();
+    fs::read_to_string(file).expect("No file there").lines().map(|line| line.chars().collect()).collect()
 }
 
 fn solve_first(input: Vec<Vec<char>>) -> i32 {

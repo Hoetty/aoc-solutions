@@ -36,7 +36,7 @@ fn get_input(file: &'static str, file2: &'static str) -> (Rules, Orders) {
         rules[left][right] = true;
     }
 
-    return (
+    (
         rules,
         fs::read_to_string(file2).expect("No file there").lines().map(|line| line.split_terminator(",").map(|s| s.parse().unwrap()).collect()).collect()
     )
