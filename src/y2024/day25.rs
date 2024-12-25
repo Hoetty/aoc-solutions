@@ -23,7 +23,7 @@ fn get_input(file: &'static str) -> (Vec<Heights>, Vec<Heights>) {
     let mut keys = Vec::new();
 
     for pattern in patterns {
-        let (destination, iter) = if pattern.chars().next().unwrap() == '#' {
+        let (destination, iter) = if pattern.starts_with('#') {
             (&mut templates, pattern.lines().collect::<Vec<&str>>())
         } else {
             (&mut keys, pattern.lines().rev().collect())

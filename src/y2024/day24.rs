@@ -38,7 +38,7 @@ fn get_input(file: &'static str) -> FxHashMap<u32, Equation> {
 
     map.extend(assign.lines().map(|s| {
         let (name, value) = s.split_once(": ").unwrap();
-        (string_to_num(name), Equation::Value(value.chars().next().unwrap() == '1'))
+        (string_to_num(name), Equation::Value(value.starts_with('1')))
     }));
 
     map.extend(equations.lines().map(|e| {
