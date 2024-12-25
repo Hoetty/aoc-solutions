@@ -2,8 +2,6 @@ use std::{cmp::Ordering, collections::HashMap, fs::{self, OpenOptions}, hash::Bu
 
 use fxhash::{FxHashMap, FxHashSet};
 use petgraph::graph::{NodeIndex, UnGraph};
-use serde::{ser::SerializeMap, Deserialize, Serialize};
-use serde_json::Result;
 
 use crate::Solution;
 
@@ -107,113 +105,87 @@ fn solve_first(input: FxHashMap<u32, Equation> ) -> u64 {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Expr {
-    Value(bool, u32),
-    And(Rc<Expr>, Rc<Expr>, u32),
-    Or(Rc<Expr>, Rc<Expr>, u32),
-    Xor(Rc<Expr>, Rc<Expr>, u32),
-}
-
-impl Serialize for Expr {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-            
-        match self {
-            Expr::Value(value, num) => {
-                let mut map = serializer.serialize_map(Some(3))?;
-                map.serialize_entry("type", "value")?;
-                map.serialize_entry("value", value)?;
-                map.serialize_entry("num", num)?;
-                map.end()
-            },
-            Expr::And(expr, expr1, num) => {
-                let mut map = serializer.serialize_map(Some(4))?;
-                map.serialize_entry("type", "and")?;
-                map.serialize_entry("left", expr.as_ref())?;
-                map.serialize_entry("right", expr1.as_ref())?;
-                map.serialize_entry("num", num)?;
-                map.end()
-            },
-            Expr::Or(expr, expr1, num) => {
-                let mut map = serializer.serialize_map(Some(4))?;
-                map.serialize_entry("type", "or")?;
-                map.serialize_entry("left", expr.as_ref())?;
-                map.serialize_entry("right", expr1.as_ref())?;
-                map.serialize_entry("num", num)?;
-                map.end()
-            },
-            Expr::Xor(expr, expr1, num) => {
-                let mut map = serializer.serialize_map(Some(4))?;
-                map.serialize_entry("type", "xor")?;
-                map.serialize_entry("left", expr.as_ref())?;
-                map.serialize_entry("right", expr1.as_ref())?;
-                map.serialize_entry("num", num)?;
-                map.end()
-            },
-        }
-    }
+    Value(u32, bool),
+    And(u32, Rc<Expr>, Rc<Expr>),
+    Or(u32, Rc<Expr>, Rc<Expr>),
+    Xor(u32, Rc<Expr>, Rc<Expr>),
 }
 
 impl Expr {
+
+    const VALUE: u32 = 1;
+    const AND: u32 = 2;
+    const OR: u32 = 3;
+    const XOR: u32 = 4;
+
+    fn eval(&self) -> bool {
+        match self {
+            Expr::Value(_, v) => *v,
+            Expr::And(_, expr, expr1) => expr.eval() && expr1.eval(),
+            Expr::Or(_, expr, expr1) => expr.eval() || expr1.eval(),
+            Expr::Xor(_, expr, expr1) => expr.eval() ^ expr1.eval(),
+        }
+    }
+
     fn num(&self) -> u32 {
         *match self {
-            Expr::Value(_, num) => num,
-            Expr::And(_, _, num) => num,
-            Expr::Or(_, _, num) => num,
-            Expr::Xor(_, _, num) => num,
+            Expr::Value(num, _) => num,
+            Expr::And(num, _, _) => num,
+            Expr::Or(num, _, _) => num,
+            Expr::Xor(num, _, _) => num,
         }
     }
 
     fn left(&self) -> &Rc<Expr> {
         match self {
             Expr::Value(_, _) => panic!("Called left on value"),
-            Expr::And(expr, _, _) => expr,
-            Expr::Or(expr, _, _) => expr,
-            Expr::Xor(expr, _, _) => expr,
-        }
-    }
-
-    fn right(&self) -> &Rc<Expr> {
-        match self {
-            Expr::Value(_, _) => panic!("Called right on value"),
             Expr::And(_, expr, _) => expr,
             Expr::Or(_, expr, _) => expr,
             Expr::Xor(_, expr, _) => expr,
         }
     }
 
+    fn right(&self) -> &Rc<Expr> {
+        match self {
+            Expr::Value(_, _) => panic!("Called right on value"),
+            Expr::And(_, _, expr) => expr,
+            Expr::Or(_, _, expr) => expr,
+            Expr::Xor(_, _, expr) => expr,
+        }
+    }
+
     fn enum_value(&self) -> u32 {
         match self {
-            Expr::Value(_, _) => 1,
-            Expr::And(_, _, _) => 2,
-            Expr::Or(_, _, _) => 3,
-            Expr::Xor(_, _, _) => 4,
+            Expr::Value(_, _) => Self::VALUE,
+            Expr::And(_, _, _) => Self::AND,
+            Expr::Or(_, _, _) => Self::OR,
+            Expr::Xor(_, _, _) => Self::XOR,
         }
     }
 
     fn deep_value(&self) -> u32 {
         match self {
-            Expr::Value(_, num) => *num,
-            Expr::And(expr, expr1, _) => expr.enum_value() + expr1.enum_value(),
-            Expr::Or(expr, expr1, _) => expr.enum_value() + expr1.enum_value(),
-            Expr::Xor(expr, expr1, _) => expr.enum_value() + expr1.enum_value(),
+            Expr::Value(num, _) => *num,
+            Expr::And(_, expr, expr1) => expr.enum_value() + expr1.enum_value(),
+            Expr::Or(_, expr, expr1) => expr.enum_value() + expr1.enum_value(),
+            Expr::Xor(_, expr, expr1) => expr.enum_value() + expr1.enum_value(),
         }
     }
 
     fn sort(&mut self) {
         match self {
             Expr::Value(_, _) => { },
-            Expr::And(expr, expr1, _) => {
+            Expr::And(_, expr, expr1) => {
                 if expr > expr1 {
                     swap(expr, expr1);
                 }
             },
-            Expr::Or(expr, expr1, _) => {
+            Expr::Or(_, expr, expr1) => {
                 if expr > expr1 {
                     swap(expr, expr1);
                 }
             },
-            Expr::Xor(expr, expr1, _) => {
+            Expr::Xor(_, expr, expr1) => {
                 if expr > expr1 {
                     swap(expr, expr1);
                 }
@@ -252,15 +224,15 @@ macro_rules! cached_or_parse {
 
 fn parse(gate: u32, table: &FxHashMap<u32, Equation>, cache: &mut FxHashMap<u32, Rc<Expr>>) -> Expr {
     let mut expr = match table.get(&gate).unwrap() {
-        Equation::Value(b) => Expr::Value(*b, gate),
+        Equation::Value(b) => Expr::Value(gate, *b),
         Equation::And(l, r) => {
-            Expr::And(cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache), gate)
+            Expr::And(gate, cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache))
         },
         Equation::Or(l, r) => {
-            Expr::Or(cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache), gate)
+            Expr::Or(gate, cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache))
         },
         Equation::Xor(l, r) => {
-            Expr::Xor(cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache), gate)
+            Expr::Xor(gate, cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache))
         },
     };
     expr.sort();
@@ -271,48 +243,48 @@ fn prefixed_to_num(prefix: char, num: u8) -> u32 {
     ((prefix as u32) << 16) | ((num as u32 / 10 + b'0' as u32) << 8) | (num as u32 % 10 + b'0' as u32)
 }
 
-fn build_perfect_adder(nums: u8) -> FxHashMap<u32, Rc<Expr>> {
+fn build_perfect_adder(nums: u8, x: u64, y: u64) -> FxHashMap<u32, Rc<Expr>> {
     let mut built = FxHashMap::default();
 
     for i in 0..nums {
         let num_xi = prefixed_to_num('x', i);
-        let xi = Rc::new(Expr::Value(true, num_xi));
+        let xi = Rc::new(Expr::Value(num_xi, (x >> i) & 1 == 1));
         built.insert(num_xi, Rc::clone(&xi));
 
         let num_yi = prefixed_to_num('y', i);
-        let yi = Rc::new(Expr::Value(true, num_yi));
+        let yi = Rc::new(Expr::Value(num_yi, (y >> i) & 1 == 1));
         built.insert(num_yi, Rc::clone(&yi));
 
         if i > 0 {
             let num_bi = prefixed_to_num('b', i);
-            let bi = Rc::new(Expr::Xor(Rc::clone(&xi), Rc::clone(&yi), num_bi));
+            let bi = Rc::new(Expr::Xor(num_bi, Rc::clone(&xi), Rc::clone(&yi)));
             built.insert(num_bi, Rc::clone(&bi));
     
             let num_zi = prefixed_to_num('z', i);
-            let zi = Rc::new(Expr::Xor(Rc::clone(built.get(&prefixed_to_num('c', i - 1)).unwrap()), Rc::clone(&bi), num_zi));
+            let zi = Rc::new(Expr::Xor(num_zi, Rc::clone(built.get(&prefixed_to_num('c', i - 1)).unwrap()), Rc::clone(&bi)));
             built.insert(num_zi, Rc::clone(&zi));
 
             if i < nums - 1 {
                 let num_ai = prefixed_to_num('a', i);
-                let ai = Rc::new(Expr::And(Rc::clone(&xi), Rc::clone(&yi), num_ai));
+                let ai = Rc::new(Expr::And(num_ai, Rc::clone(&xi), Rc::clone(&yi)));
                 built.insert(num_ai, Rc::clone(&ai));
 
                 let num_di = prefixed_to_num('d', i);
-                let di = Rc::new(Expr::And(Rc::clone(&ai), Rc::clone(built.get(&prefixed_to_num('c', i - 1)).unwrap()), num_di));
+                let di = Rc::new(Expr::And(num_di, Rc::clone(built.get(&prefixed_to_num('c', i - 1)).unwrap()), Rc::clone(&bi)));
                 built.insert(num_di, Rc::clone(&di));
 
                 let num_ci = prefixed_to_num('c', i);
-                let ci = Rc::new(Expr::Or(Rc::clone(&ai), Rc::clone(&di), num_ci));
+                let ci = Rc::new(Expr::Or(num_ci, Rc::clone(&ai), Rc::clone(&di)));
                 built.insert(num_ci, Rc::clone(&ci));
             }
         } else {
-            let num_bi = prefixed_to_num('z', i);
-            let bi = Rc::new(Expr::Xor(Rc::clone(&xi), Rc::clone(&yi), num_bi));
-            built.insert(num_bi, Rc::clone(&bi));
+            let num_zi = prefixed_to_num('z', i);
+            let zi = Rc::new(Expr::Xor(num_zi, Rc::clone(&xi), Rc::clone(&yi)));
+            built.insert(num_zi, Rc::clone(&zi));
 
-            let num_ai = prefixed_to_num('c', i);
-            let ai = Rc::new(Expr::And(Rc::clone(&xi), Rc::clone(&yi), num_ai));
-            built.insert(num_ai, Rc::clone(&ai));
+            let num_ci = prefixed_to_num('c', i);
+            let ci = Rc::new(Expr::And(num_ci, Rc::clone(&xi), Rc::clone(&yi)));
+            built.insert(num_ci, Rc::clone(&ci));
         }
     }
 
@@ -325,13 +297,13 @@ fn compare(test: &Rc<Expr>, valid: &Rc<Expr>, depth: u8) -> Vec<(u8, u32)> {
     }
 
     match test.as_ref() {
-        Expr::Value(_, num) => if valid.enum_value() == test.enum_value() && valid.num() == test.num() {
+        Expr::Value(num, _) => if valid.enum_value() == test.enum_value() && valid.num() == test.num() {
             vec![]
         } else {
             vec![(depth, *num)]
         },
         _ => {
-            if valid.enum_value() != test.enum_value() {
+            let wrong = if valid.enum_value() != test.enum_value() {
                 vec![(depth, test.num())]
             } else {
                 let mut first = compare(test.left(), valid.left(), depth - 1);
@@ -346,58 +318,194 @@ fn compare(test: &Rc<Expr>, valid: &Rc<Expr>, depth: u8) -> Vec<(u8, u32)> {
                     } else {
                         second
                     }
-                } else if first.len() < second.len() {
+                } else if first.len() <= second.len() {
                     first
                 } else {
                     second
                 }
+            };
+
+            if wrong.iter().filter(|(test_depth, _)| *test_depth == depth - 1).count() > 1 {
+                vec![(depth, test.num())]
+            } else {
+                wrong
             }
         }
     }
 }
 
-fn solve_second(input: FxHashMap<u32, Equation> ) -> u64 {
+fn compare_v2(test: &Rc<Expr>, valid: &Rc<Expr>, depth: u8, known_problems: &mut FxHashSet<u32>) -> Vec<(u8, u32)> {
+    if depth == 0 {
+        return vec![];
+    }
+
+    if known_problems.contains(&test.num()) {
+        return vec![];
+    }
+
+    if let Expr::Value(num, _) = test.as_ref() {
+        if *num == valid.num() {
+            return vec![];
+        } else {
+            return vec![(depth, *num)];
+        }
+    }
+
+    if test.enum_value() != valid.enum_value() {
+        return vec![(depth, test.num())];
+    }
+
+    let linear_left = compare_v2(test.left(), valid.left(), depth - 1, known_problems);
+    let linear_right = compare_v2(test.right(), valid.right(), depth - 1, known_problems);
+
+    let linear = [linear_left.clone(), linear_right.clone()].concat();
+
+    if linear_left.is_empty() || linear_right.is_empty() {
+        return linear;
+    }
+
+    let swapped_left = compare_v2(test.left(), valid.right(), depth - 1, known_problems);
+    let swapped_right = compare_v2(test.right(), valid.left(), depth - 1, known_problems);
+    let swapped = [swapped_left.clone(), swapped_right.clone()].concat();
+
+    if swapped_left.is_empty() || swapped_right.is_empty() {
+        return swapped;
+    }
+
+    // return linear;
+    return vec![(depth, test.num())];
+
+    // if linear.len() < swapped.len() {
+    //     return linear;
+    // } else if swapped.len() < linear.len() {
+    //     return swapped;
+    // }
+
+    // if linear[0].0 >= swapped[0].0 {
+    //     return linear;
+    // } else {
+    //     return swapped;
+    // }
+}
+
+const Z45: u32 = 8008757;
+const Z01: u32 = 8007729;
+const X01: u32 = 7876657;
+
+#[inline(always)]
+fn is_z_num(num: u32) -> bool {
+    (num >> 16) & 0xFF == b'z' as u32
+}
+
+fn validate(gates: &FxHashMap<u32, Rc<Expr>>) -> Vec<u32> {
+    let mut wrong = vec![];
+
+    wrong.extend(
+        gates.iter().filter(|(num, expr)| is_z_num(**num) && **num != Z45 && expr.enum_value() != Expr::XOR).map(|(num, _)| num)
+    );
+
+    wrong.extend(
+        gates.iter().filter(|(num, expr)| expr.enum_value() == Expr::XOR && (**num >> 16) & 0xFF != b'z' as u32 && !(expr.left().enum_value() == Expr::VALUE && expr.right().enum_value() == Expr::VALUE)).map(|(num, _)| num)
+    );
+
+    wrong.extend(
+        gates.iter().filter(|(num, expr)| (expr.enum_value() == Expr::AND || expr.enum_value() == Expr::XOR) && expr.left().enum_value() == Expr::AND && **num != Z01 && expr.right().left().num() != X01).map(|(_, expr)| expr.left().num())
+    );
+
+    wrong.extend(
+        gates.iter().filter(|(_, expr)| expr.enum_value() == Expr::OR && expr.right().enum_value() == Expr::XOR).map(|(_, expr)| expr.right().num())
+    );
+
+    wrong
+}
+
+fn num_to_str(num: u32) -> String {
+    [(num >> 16) as u8 as char, ((num >> 8) & 0xFF) as u8 as char, (num & 0xFF) as u8 as char].iter().collect()
+}
+
+fn solve_second(input: FxHashMap<u32, Equation> ) -> String {
+    println!("{}", string_to_num("z01"));
+
     let mut zgates: Vec<u32> = input.keys().filter(|gate| (**gate >> 16) as u8 == b'z').copied().collect();
     zgates.sort();
 
-    fs::remove_file("test.json");
+    // let mask = (1 << zgates.len()) - 1;
+
+    // for _ in 0..10000 {
+    //     let num1 = rand::random::<u64>() & mask;
+    //     let num2 = rand::random::<u64>() & mask;
+
+    //     let adder = build_perfect_adder(zgates.len() as u8, num1, num2);
+
+    //     let mut added = 0;
+    //     for i in 0..zgates.len() {
+    //         added <<= 1;
+    //         let z = prefixed_to_num('z', (zgates.len() - 1 - i) as u8);
+    //         if adder.get(&z).unwrap().eval() {
+    //             added |= 1;
+    //         }
+    //     }
+
+    //     println!("{}", if (num1 + num2) & mask != added { panic!() } else { "success" });
+    //     println!("{:046b}", (num1 + num2) & mask);
+    //     println!("{:046b}", added);
+    //     println!("");
+        
+    // }
+
+    fs::remove_file("test.txt");
 
     let mut file = OpenOptions::new()
         .append(true)
         .create(true)
-        .open("test.json")
+        .open("test.txt")
         .unwrap();
 
-    fs::remove_file("valid.json");
+    fs::remove_file("valid.txt");
 
     let mut file2 = OpenOptions::new()
         .append(true)
         .create(true)
-        .open("valid.json")
+        .open("valid.txt")
         .unwrap();
 
     let mut cache: FxHashMap<u32, Rc<Expr>> = FxHashMap::default();
-    let perfect = build_perfect_adder(zgates.len() as u8);
 
-    let mut wrong: FxHashSet<u32> = FxHashSet::with_capacity_and_hasher(8, BuildHasherDefault::default());
-
-    for z in zgates.iter().rev() {
-        let tree = Rc::new(parse(*z, &input, &mut cache));
-
-        let this_wrong: Vec<u32> = compare(&tree, perfect.get(z).unwrap(), 6).iter().map(|(_, wrong)| *wrong).collect();
-
-        wrong.extend(
-            &this_wrong
-        );
-
-        writeln!(file, "{}", serde_json::to_string_pretty(tree.as_ref()).unwrap());
-        writeln!(file2, "{}", serde_json::to_string_pretty(perfect.get(z).unwrap().as_ref()).unwrap());
-        writeln!(file, "{:?}", this_wrong);
-        writeln!(file, "");
-        writeln!(file2, "");
+    for z in zgates.iter() {
+        let expr = Rc::new(parse(*z, &input, &mut cache));
+        writeln!(file, "{}: {:?}", num_to_str(*z), expr);
+        cache.insert(*z, expr);
     }
+
+    let mut wrong = validate(&cache);
+    wrong.sort();
+    wrong.dedup();
+
+    // let perfect = build_perfect_adder(zgates.len() as u8, 0, 0);
+
+    // let mut wrong: FxHashSet<u32> = FxHashSet::with_capacity_and_hasher(8, BuildHasherDefault::default());
+
+    // for z in zgates.iter() {
+    //     let tree = Rc::new(parse(*z, &input, &mut cache));
+
+    //     let this_wrong: Vec<u32> = compare_v2(&tree, perfect.get(z).unwrap(), 7, &mut wrong).iter().map(|(_, wrong)| *wrong).collect();
+
+    //     wrong.extend(
+    //         &this_wrong
+    //     );
+
+    //     writeln!(file, "{:?}", tree);
+    //     writeln!(file, "{:?}", perfect.get(z).unwrap());
+    //     writeln!(file, "{:?}", this_wrong);
+    //     writeln!(file, "");
+
+    //     // writeln!(file, "{:#?}", tree);
+    //     // writeln!(file2, "{:#?}", perfect.get(z).unwrap());
+    //     // writeln!(file, "");
+    //     // writeln!(file2, "");
+    // }
 
     println!("{:?}", wrong);
 
-    0
+    wrong.iter().copied().map(&num_to_str).collect::<Vec<String>>().join(",")
 }
