@@ -1,5 +1,5 @@
 use std::{fmt::Display, fs, time::Instant};
-use tabled::{builder::Builder, settings::{object::{Cell, Columns, Rows, Segment}, themes::Colorization, Alignment, Border, Color, Style}};
+use tabled::{builder::Builder, settings::{object::{Cell, Columns, Object, Row, Rows, Segment}, themes::Colorization, Alignment, Border, Color, Style}};
 
 #[macro_export]
 macro_rules! solutions {
@@ -71,6 +71,16 @@ pub fn format_test(passed: bool) -> String {
     }
 }
 
+pub fn time_color(time: u128) -> Color {
+    if time <= 1000 {
+        Color::FG_BRIGHT_GREEN
+    } else if time <= 10000 {
+        Color::FG_BRIGHT_YELLOW
+    } else {
+        Color::FG_BRIGHT_RED
+    }
+}
+
 pub fn year(name: &str, solutions: Vec<Solution>) -> String {
     let total_time: u128 = solutions.iter().map(|s| s.time_1 + s.time_2).sum::<u128>();
 
@@ -79,7 +89,8 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
     builder.push_record(["", "", &format!("Year {name}")]);
 
     let mut passed_all = true;
-    let mut failed: Vec<Cell> = Vec::new();
+    let mut failed: Vec<Cell> = vec![];
+    let mut row_colors: Vec<(Row, Color)> = vec![];
 
     let mut i = 1;
 
@@ -105,10 +116,15 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
         builder.push_record(["", "", "", &format_test(passed), &format_time(solution.time_1 + solution.time_2), &format_percentage(solution.time_1 + solution.time_2, total_time)]);
         builder.push_record([""]);
 
+        row_colors.push((Rows::single(i), time_color(solution.time_1)));
+        row_colors.push((Rows::single(i + 1), time_color(solution.time_2)));
+        row_colors.push((Rows::single(i + 2), time_color(solution.time_1 + solution.time_2)));
+
         i += 4;
     }
 
     builder.push_record(["Total", "", "", &format_test(passed_all), &format_time(total_time), &format_percentage(total_time, total_time)]);
+    row_colors.push((Rows::single(i), time_color(total_time)));
 
     if !passed_all {
         failed.push(Cell::new(i, 3));
@@ -119,8 +135,13 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
         .with(Style::re_structured_text())
         .modify(Segment::all(), Alignment::right())
         .modify(Columns::single(2), Alignment::center())
-        .modify(Rows::last(), Border::inherit(Style::re_structured_text()).top('='))
-        .with(Colorization::exact([Color::FG_BRIGHT_GREEN], Columns::single(3)));
+        .modify(Rows::last(), Border::inherit(Style::re_structured_text()).top('='));
+
+    for colorization in row_colors {
+        table.with(Colorization::exact([colorization.1], colorization.0.intersect(Columns::new(4..=5))));
+    }
+        
+    table.with(Colorization::exact([Color::FG_BRIGHT_GREEN], Columns::single(3)));
 
     for cell in failed {
         table.with(Colorization::exact([Color::FG_BRIGHT_RED], cell));
