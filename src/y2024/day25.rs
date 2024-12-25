@@ -60,6 +60,6 @@ fn solve_first(input: (Vec<Heights>, Vec<Heights>)) -> u64 {
     fitting
 }
 
-fn solve_second(input: (Vec<Heights>, Vec<Heights>)) -> u64 {
+fn solve_second(_input: (Vec<Heights>, Vec<Heights>)) -> u64 {
     0
 }
