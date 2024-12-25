@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs::{self}, rc::Rc};
+use std::{collections::HashSet, fs::{self}, hash::BuildHasherDefault, rc::Rc};
 
 use fxhash::FxHashSet;
 
@@ -134,40 +134,38 @@ struct PathPoint {
 }
 
 fn solve_second(input: Maze) -> usize {
-    let mut visited: FxHashSet<(usize, isize)> = FxHashSet::default();
-    let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::default();
+    let mut visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(4096, BuildHasherDefault::default());
+    let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(256, BuildHasherDefault::default());
 
-    let mut current_round: Vec<PathPoint> = Vec::new();
-    let mut next_round: Vec<PathPoint> = Vec::from([
-        PathPoint {
+    let mut current_round: Vec<Rc<PathPoint>> = vec![];
+    let mut next_round: Vec<Rc<PathPoint>> = vec![
+        Rc::new(PathPoint {
             index: input.start, 
             direction: 1, 
             score: 0,
             last: None 
-        }
-    ]);
+        })
+    ];
 
+    let mut paths: Vec<PathPoint> = Vec::with_capacity(256);
 
     loop {
         std::mem::swap(&mut current_round, &mut next_round);
         next_round.clear();
 
         let mut found: Option<usize> = None;
-        let mut paths: Vec<PathPoint> = Vec::new();
 
-        for state in current_round.clone() {
-            let reference = Rc::new(state);
-
+        for state in &current_round {
             let mut i = 0;
             loop {
-                let current_pos = (reference.index as isize + i * reference.direction) as usize;
+                let current_pos = (state.index as isize + i * state.direction) as usize;
                 
                 if input.tiles[current_pos] {
                     break;
                 }
 
                 if current_pos == input.end {
-                    let score = reference.score + i as usize;
+                    let score = state.score + i as usize;
                     match found {
                         Some(num) => if score <= num { 
                             found = Some(score);  
@@ -178,62 +176,62 @@ fn solve_second(input: Maze) -> usize {
                             
                             paths.push(PathPoint {
                                 index: current_pos,
-                                direction: reference.direction,
+                                direction: state.direction,
                                 score,
-                                last: Some(Rc::clone(&reference)),
+                                last: Some(Rc::clone(&state)),
                             });
                         },
                         None => {
                             found = Some(score);
                             paths.push(PathPoint {
                                 index: current_pos,
-                                direction: reference.direction,
+                                direction: state.direction,
                                 score,
-                                last: Some(Rc::clone(&reference)),
+                                last: Some(Rc::clone(&state)),
                             });
                         },
                     };
                 }
 
-                let right = right(reference.direction, input.width);
+                let right = right(state.direction, input.width);
                 let right_pos = (current_pos as isize + right) as usize;
                 if !input.tiles[right_pos] {
                     if visited.insert((current_pos, right)) {
-                        next_round.push(PathPoint {
+                        next_round.push(Rc::new(PathPoint {
                             index: current_pos,
                             direction: right,
-                            score: reference.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&reference)),
-                        });
+                            score: state.score + 1000 + i as usize,
+                            last: Some(Rc::clone(&state)),
+                        }));
                         newly_visited.insert((current_pos, right));
                     } else if newly_visited.contains(&(current_pos, right)) {
-                        next_round.push(PathPoint {
+                        next_round.push(Rc::new(PathPoint {
                             index: current_pos,
                             direction: right,
-                            score: reference.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&reference)),
-                        });
+                            score: state.score + 1000 + i as usize,
+                            last: Some(Rc::clone(&state)),
+                        }));
                     }
                 }
 
-                let left = left(reference.direction, input.width);
+                let left = left(state.direction, input.width);
                 let left_pos = (current_pos as isize + left) as usize;
                 if !input.tiles[left_pos] {
                     if visited.insert((current_pos, left)) {
-                        next_round.push(PathPoint {
+                        next_round.push(Rc::new(PathPoint {
                             index: current_pos,
                             direction: left,
-                            score: reference.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&reference)),
-                        });
+                            score: state.score + 1000 + i as usize,
+                            last: Some(Rc::clone(&state)),
+                        }));
                         newly_visited.insert((current_pos, left));
                     } else if newly_visited.contains(&(current_pos, left)) {
-                        next_round.push(PathPoint {
+                        next_round.push(Rc::new(PathPoint {
                             index: current_pos,
                             direction: left,
-                            score: reference.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&reference)),
-                        });
+                            score: state.score + 1000 + i as usize,
+                            last: Some(Rc::clone(&state)),
+                        }));
                     }
                 }
 
@@ -271,6 +269,8 @@ fn solve_second(input: Maze) -> usize {
 
             return path_tiles.len();
         }
+
+        paths.clear();
 
         newly_visited.clear();
     }
