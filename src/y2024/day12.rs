@@ -2,19 +2,12 @@ use std::{collections::VecDeque, fs, hash::BuildHasherDefault};
 
 use fxhash::FxHashSet;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day12.txt");
+solutions!{2024, 12}
 
-    Solution::evaluated(
-        "Day 12".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str) -> Vec<Vec<char>> {
+fn get_input(file: &str) -> Vec<Vec<char>> {
     fs::read_to_string(file).expect("No file there").lines().map(|l| l.chars().collect()).collect()
 }
 

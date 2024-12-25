@@ -1,20 +1,12 @@
 use std::{collections::VecDeque, fs::{self}};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
+
+solutions!{2024, 17}
 
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day17.txt");
-
-    Solution::evaluated(
-        "Day 17".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-
-fn get_input(file: &'static str) -> ((u64, u64, u64), Vec<u8>) {
+fn get_input(file: &str) -> ((u64, u64, u64), Vec<u8>) {
     let file = fs::read_to_string(file).expect("No file there");
     let lines: Vec<&str> = file.lines().collect();
 

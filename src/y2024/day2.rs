@@ -1,20 +1,13 @@
 use std::fs;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
+
+solutions!{2024, 2}
 
 type List = Vec<Vec<i32>>;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day2.txt");
-
-    Solution::evaluated(
-        "Day 2".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str) -> List {
+fn get_input(file: &str) -> List {
     let content = fs::read_to_string(file).expect("No file there");
     content.lines().map(|l| l.split_whitespace().map(|s| s.parse::<i32>().expect("Input must be numeric")).collect::<Vec<i32>>()).collect::<List>()
 }

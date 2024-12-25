@@ -1,21 +1,14 @@
 use std::fs;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day25.txt");
-
-    Solution::evaluated(
-        "Day 25".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 25}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Heights(u8, u8, u8, u8, u8);
 
-fn get_input(file: &'static str) -> (Vec<Heights>, Vec<Heights>) {
+fn get_input(file: &str) -> (Vec<Heights>, Vec<Heights>) {
     let file = fs::read_to_string(file).unwrap();
     let patterns = file.split("\n\n");
 

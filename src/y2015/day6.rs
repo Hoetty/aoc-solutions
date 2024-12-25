@@ -1,16 +1,9 @@
 use std::fs;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2015/day6.txt");
-
-    Solution::evaluated(
-        "Day 6".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2015, 6}
 
 const TURN_ON: &str = "turn on";
 const TURN_OFF: &str = "turn off";
@@ -51,7 +44,7 @@ fn parse_command(input: &str) -> Command {
     }
 }
 
-fn get_input(file: &'static str) -> Vec<Command> {
+fn get_input(file: &str) -> Vec<Command> {
     fs::read_to_string(file).unwrap().lines().map(&parse_command).collect()
 }
 

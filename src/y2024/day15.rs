@@ -1,16 +1,9 @@
 use std::{collections::HashSet, fs::{self}};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day15.txt");
-
-    Solution::evaluated(
-        "Day 15".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 15}
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 enum Tile {
@@ -27,7 +20,7 @@ struct Map {
     width: usize
 }
 
-fn get_input(file: &'static str) -> Map {
+fn get_input(file: &str) -> Map {
     let file = fs::read_to_string(file).expect("No file there");
     let (map, moves) = file.split_once("\n\n").unwrap();
 

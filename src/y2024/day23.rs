@@ -3,19 +3,12 @@ use std::fs;
 use fxhash::FxHashSet;
 use petgraph::graph::{NodeIndex, UnGraph};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day23.txt");
+solutions!{2024, 23}
 
-    Solution::evaluated(
-        "Day 23".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str) -> UnGraph<(), (), u16> {
+fn get_input(file: &str) -> UnGraph<(), (), u16> {
     UnGraph::from_edges(
         fs::read_to_string(file).expect("No file there").lines().map(|line| {
             let (left, right) = line.split_once("-").unwrap();

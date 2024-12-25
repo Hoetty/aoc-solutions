@@ -1,23 +1,18 @@
 use std::fs;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
+
+solutions!{2024, 5}
 
 type Rules = Vec<Vec<bool>>;
 type Orders = Vec<Vec<usize>>;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day5-1.txt", "inputs/2024/day5-2.txt");
+fn get_input(file: &str) -> (Rules, Orders) {
+    let file = fs::read_to_string(file).expect("No file there");
+    let (first, second) = file.split_once("\n\n").unwrap();
 
-    Solution::evaluated(
-        "Day 5".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str, file2: &'static str) -> (Rules, Orders) {
-
-    let r = fs::read_to_string(file).expect("No file there").lines().map(|line| {
+    let r = first.lines().map(|line| {
         let (a, b) = line.split_once("|").unwrap();
         (a.parse().unwrap(), b.parse().unwrap())
     }).collect::<Vec<(usize, usize)>>();
@@ -38,7 +33,7 @@ fn get_input(file: &'static str, file2: &'static str) -> (Rules, Orders) {
 
     (
         rules,
-        fs::read_to_string(file2).expect("No file there").lines().map(|line| line.split_terminator(",").map(|s| s.parse().unwrap()).collect()).collect()
+        second.lines().map(|line| line.split_terminator(",").map(|s| s.parse().unwrap()).collect()).collect()
     )
 }
 

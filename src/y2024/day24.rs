@@ -2,17 +2,10 @@ use std::{cmp::Ordering, fs, mem::swap, rc::Rc};
 
 use fxhash::FxHashMap;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day24.txt");
-
-    Solution::evaluated(
-        "Day 24".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 24}
 
 #[derive(Debug, Clone, Copy)]
 enum Equation {
@@ -28,7 +21,7 @@ fn string_to_num(gate: &str) -> u32 {
     ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | (c[2] as u32)
 }
 
-fn get_input(file: &'static str) -> FxHashMap<u32, Equation> {
+fn get_input(file: &str) -> FxHashMap<u32, Equation> {
     let mut map = FxHashMap::default();
     let file = fs::read_to_string(file).expect("No file there");
     let (assign, equations) = file.split_once("\n\n").unwrap();

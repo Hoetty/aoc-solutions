@@ -1,18 +1,11 @@
 use std::{cmp::min, fs};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2015/day2.txt");
+solutions!{2015, 2}
 
-    Solution::evaluated(
-        "Day 2".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-pub fn get_input(file: &'static str) -> Vec<(i32, i32, i32)> {
+pub fn get_input(file: &str) -> Vec<(i32, i32, i32)> {
     fs::read_to_string(file).unwrap().lines().map(|l| l.split_terminator('x').map(|i| i.parse().unwrap()).collect::<Vec<i32>>()).map(|v| (v[0], v[1], v[2])).collect()
 }
 

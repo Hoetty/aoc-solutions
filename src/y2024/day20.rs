@@ -1,16 +1,9 @@
 use std::fs;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day20.txt");
-
-    Solution::evaluated(
-        "Day 20".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 20}
 
 #[derive(Clone)]
 struct Maze {
@@ -20,7 +13,7 @@ struct Maze {
     width: usize
 }
 
-fn get_input(file: &'static str) -> Maze {
+fn get_input(file: &str) -> Maze {
     let file = fs::read_to_string(file).expect("No file there");
     
     let mut tiles: Vec<bool> = Vec::new();

@@ -2,19 +2,12 @@ use std::fs;
 
 use regex::Regex;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day3.txt");
+solutions!{2024, 3}
 
-    Solution::evaluated(
-        "Day 3".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str) -> String {
+fn get_input(file: &str) -> String {
     fs::read_to_string(file).expect("No file there")
 }
 

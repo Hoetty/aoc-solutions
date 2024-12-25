@@ -1,18 +1,10 @@
 use std::fs;
+use crate::formatting::Solution;
+use crate::solutions;
 
-use crate::Solution;
+solutions!{2024, 7}
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day7.txt");
-
-    Solution::evaluated(
-        "Day 7".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str) -> Vec<(i64, Vec<i64>)> {
+fn get_input(file: &str) -> Vec<(i64, Vec<i64>)> {
     fs::read_to_string(file)
         .expect("No file there")
         .lines()

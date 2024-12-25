@@ -1,18 +1,11 @@
 use std::fs;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2015/day1.txt");
+solutions!{2015, 1}
 
-    Solution::evaluated(
-        "Day 1".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-pub fn get_input(file: &'static str) -> String {
+pub fn get_input(file: &str) -> String {
     fs::read_to_string(file).unwrap()
 }
 

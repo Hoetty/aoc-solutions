@@ -1,4 +1,4 @@
-use crate::year;
+use crate::formatting::year;
 
 pub mod day1;
 pub mod day2;

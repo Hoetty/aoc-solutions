@@ -2,17 +2,10 @@ use std::{collections::VecDeque, fs, hash::BuildHasherDefault};
 
 use fxhash::FxHashSet;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day10.txt");
-
-    Solution::evaluated(
-        "Day 10".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 10}
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 struct Spot {
@@ -26,7 +19,7 @@ impl Spot {
     }
 }
 
-fn get_input(file: &'static str) -> (Vec<Vec<u8>>, Vec<Spot>) {
+fn get_input(file: &str) -> (Vec<Vec<u8>>, Vec<Spot>) {
     let mut starting = Vec::new();
     let mut map = Vec::new();
 

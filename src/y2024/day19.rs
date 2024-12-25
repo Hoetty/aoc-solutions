@@ -2,7 +2,10 @@ use std::{fs::{self}, ops::{BitAnd, BitOr, BitXor, Shl, Shr}};
 
 use fxhash::FxHashMap;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
+
+solutions!{2024, 19}
 
 const WHITE: U256 = U256([0, 1]);
 const BLUE: U256 = U256([0, 2]);
@@ -116,16 +119,6 @@ impl Shl<usize> for U256 {
     }
 }
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day19.txt");
-
-    Solution::evaluated(
-        "Day 19".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Pattern(U256, usize);
 
@@ -148,7 +141,7 @@ fn string_to_num(pattern: &str) -> Pattern {
     Pattern(num, i)
 }
 
-fn get_input(file: &'static str) -> (Vec<Vec<Pattern>>, Vec<Pattern>) {
+fn get_input(file: &str) -> (Vec<Vec<Pattern>>, Vec<Pattern>) {
     let file = fs::read_to_string(file).expect("No file there");
     let (first, second) = file.split_once("\n\n").unwrap();
 

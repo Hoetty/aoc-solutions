@@ -2,17 +2,10 @@ use std::{fs, hash::BuildHasherDefault};
 
 use fxhash::FxHashMap;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day21.txt");
-
-    Solution::evaluated(
-        "Day 21".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 21}
 
 const X: u8 = 3 << 2;
 const Y: u8 = 3;
@@ -42,7 +35,7 @@ const KEY_8: u8 = X_1 | Y_3;
 const KEY_9: u8 = X_0 | Y_3;
 
 
-fn get_input(file: &'static str) -> Vec<(usize, u32)> {
+fn get_input(file: &str) -> Vec<(usize, u32)> {
     fs::read_to_string(file).expect("No file there").lines().map(|line| (line[..line.len() - 1].parse().unwrap(), {
         let mut sequence: u32 = 0;
         for c in line.chars() {

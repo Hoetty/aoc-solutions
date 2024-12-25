@@ -1,8 +1,9 @@
 use std::{collections::{HashMap, HashSet}, fs, ops::{Add, Sub}};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-// use num::integer::gcd;
+solutions!{2024, 8}
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 struct Vector2 {
@@ -14,12 +15,6 @@ impl Vector2 {
     fn new(x: i32, y: i32) -> Vector2 {
         Vector2 { x, y }
     }
-
-    // To scale down a vector, in case a smaller one would be possible
-    // fn scaled_down(&self) -> Vector2 {
-    //     let div = gcd(self.x, self.y);
-    //     Vector2::new(self.x / div, self.y / div)
-    // }
 
     fn scaled(&self, scale: i32) -> Vector2 {
         Vector2::new(self.x * scale, self.y * scale)
@@ -42,17 +37,7 @@ impl Sub for Vector2 {
     }
 }
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day8.txt");
-
-    Solution::evaluated(
-        "Day 8".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
-
-fn get_input(file: &'static str) -> (HashMap<char, Vec<Vector2>>, Vector2) {
+fn get_input(file: &str) -> (HashMap<char, Vec<Vector2>>, Vector2) {
     let file: Vec<Vec<char>> = fs::read_to_string(file).expect("No file there").lines().map(|l| l.chars().collect()).collect();
 
     let mut antennas = HashMap::new();

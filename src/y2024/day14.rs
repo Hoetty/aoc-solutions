@@ -1,19 +1,12 @@
 use std::{fs::{self, OpenOptions}, io::Write};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
+
+solutions!{2024, 14}
 
 const DIMENSION: (i64, i64) = (101, 103);
 const TREE_THRESHOLD: f64 = 700.0;
-
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day14.txt", DIMENSION);
-
-    Solution::evaluated(
-        "Day 14".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 struct Robot((i64, i64), (i64, i64));
@@ -106,7 +99,7 @@ impl Map {
     }
 }
 
-fn get_input(file: &'static str, dimension: (i64, i64)) -> Map {
+fn get_input(file: &str) -> Map {
     Map {
         robots: fs::read_to_string(file).expect("No file there").lines().map(|l| {
             let l = l.replace("p=", "").replace("v=", "");
@@ -117,7 +110,7 @@ fn get_input(file: &'static str, dimension: (i64, i64)) -> Map {
 
             Robot((px.parse().unwrap(), py.parse().unwrap()), (vx.parse().unwrap(), vy.parse().unwrap()))
         }).collect(),
-        dimension
+        dimension: DIMENSION
     }
 }
 

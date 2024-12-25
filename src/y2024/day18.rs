@@ -1,21 +1,13 @@
 use std::{collections::VecDeque, fs::{self}};
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
+
+solutions!{2024, 18}
 
 const DIMENSIONS: (usize, usize) = (71, 71);
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day18.txt");
-
-    Solution::evaluated(
-        "Day 18".to_owned(), 
-        &|| solve_first(input.clone(), DIMENSIONS),
-        &|| solve_second(input.clone(), DIMENSIONS)
-    )
-}
-
-
-fn get_input(file: &'static str) -> Vec<(u8, u8)> {
+fn get_input(file: &str) -> Vec<(u8, u8)> {
     fs::read_to_string(file).expect("No file there").lines().map(|l| l.split_once(",").unwrap()).map(|(l, r)| (l.parse().unwrap(), r.parse().unwrap())).collect()
 }
 
@@ -66,17 +58,17 @@ fn solve_n(n: usize, input: &[(u8, u8)], dimensions: (usize, usize)) -> i64
     tiles[dimensions.0 * dimensions.1 - 1]
 }
 
-fn solve_first(input: Vec<(u8, u8)>, dimensions: (usize, usize)) -> i64 {
-    solve_n(1024, &input, dimensions)
+fn solve_first(input: Vec<(u8, u8)>) -> i64 {
+    solve_n(1024, &input, DIMENSIONS)
 }
 
-fn solve_second(input: Vec<(u8, u8)>, dimensions: (usize, usize)) -> String {
+fn solve_second(input: Vec<(u8, u8)>) -> String {
     let mut bottom = 0;
-    let mut top = dimensions.0 * dimensions.1;
+    let mut top = DIMENSIONS.0 * DIMENSIONS.1;
 
     while bottom != top - 1 {
         let i = (bottom + top) / 2;
-        let n = solve_n(i, &input, dimensions);
+        let n = solve_n(i, &input, DIMENSIONS);
 
         if n == i64::MAX {
             top = i;

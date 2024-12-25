@@ -2,17 +2,10 @@ use std::{collections::HashSet, fs, hash::{BuildHasherDefault, Hash}, ops::{Add,
 
 use fxhash::FxHashSet;
 
-use crate::Solution;
+use crate::formatting::Solution;
+use crate::solutions;
 
-pub fn solutions() -> Solution {
-    let input = get_input("inputs/2024/day6.txt");
-
-    Solution::evaluated(
-        "Day 6".to_owned(), 
-        &|| solve_first(input.clone()),
-        &|| solve_second(input.clone())
-    )
-}
+solutions!{2024, 6}
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum PointInfo {
@@ -147,7 +140,7 @@ fn next_position(map: &Map, start: &Point, direction: &Point, obstacle: Option<&
     }
 }
 
-fn get_input(file: &'static str) -> (Point, Map) {
+fn get_input(file: &str) -> (Point, Map) {
     let file = fs::read_to_string(file).expect("No file there");
     let lines = file.lines();
 
