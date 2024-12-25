@@ -23,7 +23,6 @@ impl U256 {
     const ZERO: U256 = U256([0, 0]);
 
     fn decremented(&self) -> U256 {
-
         if self.0[0] == 0 {
             if self.0[1] == 0 {
                 U256::ZERO
@@ -33,22 +32,7 @@ impl U256 {
         } else if self.0[1] == 0 {
             U256([self.0[0] - 1, u128::MAX])
         } else {
-            U256([0, self.0[1] - 1])
-        }
-    }
-}
-
-impl PartialOrd for U256 {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for U256 {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match self.0[1].cmp(&other.0[1]) {
-            std::cmp::Ordering::Equal => self.0[0].cmp(&other.0[0]),
-            other => other,
+            U256([self.0[0], self.0[1] - 1])
         }
     }
 }
