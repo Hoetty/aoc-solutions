@@ -1,6 +1,4 @@
-use std::{fs::{self}, hash::Hash};
-
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use std::fs;
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -48,58 +46,32 @@ fn solve_first(input: Vec<u32>) -> u64 {
     input.iter().map(|num| step_n_times(*num, 2000) as u64).sum()
 }
 
-#[derive(Clone, Copy)]
-struct Gain((i8, i8, i8, i8), u8);
+const MASK: usize = (1 << 20) - 1;
 
-impl Hash for Gain {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-    }
-}
+fn solve_second(input: Vec<u32>) -> u16 {
+    let mut scores: Vec<u16> = vec![0; 1 << 20];
+    let mut seen: Vec<u16> = vec![0; 1 << 20];
 
-impl PartialEq for Gain {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl Eq for Gain {
-
-}
-
-fn gains(secret: u32, gains: &mut FxHashSet<Gain>) {
-    let mut secret = secret;
-    let mut sequence = (0, 0, 0, 0);
-
-    for i in 0..2000 {
-        let next = step(secret);
-
-        let bananas = (next as i32 % 10) as i8;
-        let bananas_last = (secret as i32 % 10) as i8;
-
-        sequence = (sequence.1, sequence.2, sequence.3, bananas - bananas_last);
-
-        secret = next;
-
-        if i > 3 {
-            gains.insert(Gain(sequence, bananas as u8));
-        }
-    }
-}
-
-fn solve_second(input: Vec<u32>) -> u32 {
-    let mut scores: FxHashMap<(i8, i8, i8, i8), u32> = FxHashMap::with_capacity_and_hasher(2048, FxBuildHasher);
-
-    let mut set: FxHashSet<Gain> = FxHashSet::with_capacity_and_hasher(2048, FxBuildHasher);
-
-    for num in input {
-        gains(num, &mut set);
-        for gain in set.drain() {
-            scores.entry(gain.0)
-                .and_modify(|v| *v += gain.1 as u32)
-                .or_insert(gain.1 as u32);
+    for (monkey, secret) in input.iter().enumerate() {
+        let mut secret = *secret;
+        let mut sequence = 0;
+    
+        for i in 0..2000 {
+            let next = step(secret);
+    
+            let bananas = (next as i32 % 10) as i8;
+            let bananas_last = (secret as i32 % 10) as i8;
+    
+            sequence = (sequence << 5) | (10 + bananas - bananas_last) as usize;
+    
+            secret = next;
+    
+            if i > 3 && seen[sequence & MASK] < monkey as u16 + 1 {
+                scores[sequence & MASK] += bananas as u16;
+                seen[sequence & MASK] = monkey as u16 + 1;
+            }
         }
     }
 
-    *scores.values().max().unwrap()
+    *scores.iter().max().unwrap()
 }
