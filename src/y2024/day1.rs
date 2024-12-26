@@ -51,18 +51,18 @@ fn solve_first(input: List) -> u32 {
 fn solve_second(input: List) -> u32 {
     let (left, right) = input;
     
-    let mut frequency: FxHashMap<u32, u8> = FxHashMap::with_capacity_and_hasher(1000, FxBuildHasher);
+    let mut frequencies: FxHashMap<u32, u8> = FxHashMap::with_capacity_and_hasher(1000, FxBuildHasher);
 
     // First calculate the frequencies of all numbers in the right list 
     for num in right {
-        match frequency.get_mut(&num) {
+        match frequencies.get_mut(&num) {
             Some(count) => { *count += 1; },
-            None => { frequency.insert(num, 1); }
+            None => { frequencies.insert(num, 1); }
         }
     }
 
     // Then look up the frequencies of the right list for the numbers in the left list
     left.iter()
-        .map(|i| i * *frequency.get(i).unwrap_or(&0) as u32)
+        .map(|num| num * *frequencies.get(num).unwrap_or(&0) as u32)
         .sum()
 }
