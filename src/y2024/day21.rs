@@ -1,6 +1,6 @@
-use std::{fs, hash::BuildHasherDefault};
+use std::fs;
 
-use fxhash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -156,12 +156,12 @@ fn number_of_presses(sequence: u32, start: u8, depth: u8, cache: &mut FxHashMap<
 
 fn solve_first(input: Vec<(usize, u32)>) -> u64 {
     input.iter().map(|(num, sequence)| (num, {
-        number_of_presses(*sequence, KEY_A, 4, &mut FxHashMap::with_capacity_and_hasher(0x80, BuildHasherDefault::default()))
+        number_of_presses(*sequence, KEY_A, 4, &mut FxHashMap::with_capacity_and_hasher(0x80, FxBuildHasher))
     })).map(|(num, count)| *num as u64 * count).sum()
 }
 
 fn solve_second(input: Vec<(usize, u32)>) -> u64 {
     input.iter().map(|(num, sequence)| (num, {
-        number_of_presses(*sequence, KEY_A, 27, &mut FxHashMap::with_capacity_and_hasher(0x0800, BuildHasherDefault::default()))
+        number_of_presses(*sequence, KEY_A, 27, &mut FxHashMap::with_capacity_and_hasher(0x0800, FxBuildHasher))
     })).map(|(num, count)| *num as u64 * count).sum()
 }

@@ -1,6 +1,6 @@
-use std::{fs::{self}, hash::{BuildHasherDefault, Hash}};
+use std::{fs::{self}, hash::Hash};
 
-use fxhash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -88,9 +88,9 @@ fn gains(secret: u32, gains: &mut FxHashSet<Gain>) {
 }
 
 fn solve_second(input: Vec<u32>) -> u32 {
-    let mut scores: FxHashMap<(i8, i8, i8, i8), u32> = FxHashMap::with_capacity_and_hasher(2048, BuildHasherDefault::default());
+    let mut scores: FxHashMap<(i8, i8, i8, i8), u32> = FxHashMap::with_capacity_and_hasher(2048, FxBuildHasher);
 
-    let mut set: FxHashSet<Gain> = FxHashSet::with_capacity_and_hasher(2048, BuildHasherDefault::default());
+    let mut set: FxHashSet<Gain> = FxHashSet::with_capacity_and_hasher(2048, FxBuildHasher);
 
     for num in input {
         gains(num, &mut set);

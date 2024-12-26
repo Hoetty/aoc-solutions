@@ -1,6 +1,6 @@
 use std::{fs::{self}, ops::{BitAnd, BitOr, BitXor, Shl, Shr}};
 
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 
 use crate::formatting::Solution;
 use crate::solutions;

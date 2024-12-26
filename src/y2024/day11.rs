@@ -1,6 +1,6 @@
-use std::{fs, hash::BuildHasherDefault};
+use std::fs;
 
-use fxhash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -65,12 +65,12 @@ fn mutations(num: u64, depth: u8, cache: &mut FxHashMap<(u64, u8), u64>) -> u64 
 
 fn solve_first(input: Vec<u64>) -> u64 {
     input.iter()
-        .map(|num| mutations(*num, 25, &mut FxHashMap::with_capacity_and_hasher(4096, BuildHasherDefault::default())))
+        .map(|num| mutations(*num, 25, &mut FxHashMap::with_capacity_and_hasher(4096, FxBuildHasher)))
         .sum()
 }
 
 fn solve_second(input: Vec<u64>) -> u64 {
     input.iter()
-        .map(|num| mutations(*num, 75, &mut FxHashMap::with_capacity_and_hasher(4096, BuildHasherDefault::default())))
+        .map(|num| mutations(*num, 75, &mut FxHashMap::with_capacity_and_hasher(4096, FxBuildHasher)))
         .sum()
 }

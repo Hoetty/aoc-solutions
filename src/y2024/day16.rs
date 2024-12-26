@@ -1,6 +1,6 @@
-use std::{collections::HashSet, fs::{self}, hash::BuildHasherDefault, rc::Rc};
+use std::{collections::HashSet, fs::{self}, rc::Rc};
 
-use fxhash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -136,8 +136,8 @@ struct PathPoint {
 }
 
 fn solve_second(input: Maze) -> usize {
-    let mut visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(4096, BuildHasherDefault::default());
-    let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(256, BuildHasherDefault::default());
+    let mut visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(4096, FxBuildHasher);
+    let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(256, FxBuildHasher);
 
     let mut current_round: Vec<Rc<PathPoint>> = vec![];
     let mut next_round: Vec<Rc<PathPoint>> = vec![
@@ -180,7 +180,7 @@ fn solve_second(input: Maze) -> usize {
                                 index: current_pos,
                                 direction: state.direction,
                                 score,
-                                last: Some(Rc::clone(&state)),
+                                last: Some(Rc::clone(state)),
                             });
                         },
                         None => {
@@ -189,7 +189,7 @@ fn solve_second(input: Maze) -> usize {
                                 index: current_pos,
                                 direction: state.direction,
                                 score,
-                                last: Some(Rc::clone(&state)),
+                                last: Some(Rc::clone(state)),
                             });
                         },
                     };
@@ -203,7 +203,7 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: right,
                             score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&state)),
+                            last: Some(Rc::clone(state)),
                         }));
                         newly_visited.insert((current_pos, right));
                     } else if newly_visited.contains(&(current_pos, right)) {
@@ -211,7 +211,7 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: right,
                             score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&state)),
+                            last: Some(Rc::clone(state)),
                         }));
                     }
                 }
@@ -224,7 +224,7 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: left,
                             score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&state)),
+                            last: Some(Rc::clone(state)),
                         }));
                         newly_visited.insert((current_pos, left));
                     } else if newly_visited.contains(&(current_pos, left)) {
@@ -232,7 +232,7 @@ fn solve_second(input: Maze) -> usize {
                             index: current_pos,
                             direction: left,
                             score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(&state)),
+                            last: Some(Rc::clone(state)),
                         }));
                     }
                 }

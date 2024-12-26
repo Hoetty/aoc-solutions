@@ -1,6 +1,6 @@
-use std::{collections::VecDeque, fs, hash::BuildHasherDefault};
+use std::{collections::VecDeque, fs};
 
-use fxhash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -15,7 +15,7 @@ fn solve_first(input: Vec<Vec<char>>) -> u64 {
     let height = input.len();
     let width = input[0].len();
 
-    let mut visited: FxHashSet<(u16, u16)> = FxHashSet::with_capacity_and_hasher(width * height, BuildHasherDefault::default());
+    let mut visited: FxHashSet<(u16, u16)> = FxHashSet::with_capacity_and_hasher(width * height, FxBuildHasher);
 
     let mut price = 0;
 
@@ -78,7 +78,7 @@ fn solve_second(input: Vec<Vec<char>>) -> u64 {
     let height = input.len();
     let width = input[0].len();
 
-    let mut visited: FxHashSet<(u16, u16)> = FxHashSet::with_capacity_and_hasher(width * height, BuildHasherDefault::default());
+    let mut visited: FxHashSet<(u16, u16)> = FxHashSet::with_capacity_and_hasher(width * height, FxBuildHasher);
 
     let mut price = 0;
 

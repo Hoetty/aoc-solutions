@@ -1,6 +1,6 @@
-use std::{fs::{self}, hash::BuildHasherDefault};
+use std::fs;
 
-use fxhash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -58,7 +58,7 @@ pub fn solve_first(input: Vec<String>) -> usize {
 
 fn is_nice2(input: &str) -> bool {
     let charlist = input.chars().collect::<Vec<char>>();
-    let mut pairs: FxHashSet<(char, char)> = FxHashSet::with_capacity_and_hasher(32, BuildHasherDefault::default());
+    let mut pairs: FxHashSet<(char, char)> = FxHashSet::with_capacity_and_hasher(32, FxBuildHasher);
     let mut double = false;
     let mut mirrored = false;
 

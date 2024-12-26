@@ -1,6 +1,6 @@
-use std::{collections::VecDeque, fs, hash::BuildHasherDefault};
+use std::{collections::VecDeque, fs};
 
-use fxhash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -46,7 +46,7 @@ fn solve_first(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
     let mut sum = 0;
 
     for base in starting {
-        let mut heads: FxHashSet<Spot> = FxHashSet::with_capacity_and_hasher(10, BuildHasherDefault::default());
+        let mut heads: FxHashSet<Spot> = FxHashSet::with_capacity_and_hasher(10, FxBuildHasher);
         let mut queue = VecDeque::from([base]);
 
         while !queue.is_empty() {

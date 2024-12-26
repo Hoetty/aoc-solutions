@@ -1,6 +1,6 @@
 use std::fs;
 
-use fxhash::FxHashSet;
+use rustc_hash::FxHashSet;
 use petgraph::graph::{NodeIndex, UnGraph};
 
 use crate::formatting::Solution;

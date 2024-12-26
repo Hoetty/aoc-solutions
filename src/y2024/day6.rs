@@ -1,6 +1,6 @@
-use std::{collections::HashSet, fs, hash::{BuildHasherDefault, Hash}, ops::{Add, Sub}};
+use std::{collections::HashSet, fs, hash::Hash, ops::{Add, Sub}};
 
-use fxhash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -204,7 +204,7 @@ fn solve_first(input: (Point, Map)) -> i32 {
 }
 
 fn solve_second(input: (Point, Map)) -> i32 {
-    let mut visited: FxHashSet<StealthDirection> = FxHashSet::with_capacity_and_hasher(6000, BuildHasherDefault::default());
+    let mut visited: FxHashSet<StealthDirection> = FxHashSet::with_capacity_and_hasher(6000, FxBuildHasher);
     let (starting, map) = input;
     {
         let mut position = starting;
@@ -223,7 +223,7 @@ fn solve_second(input: (Point, Map)) -> i32 {
         }
     }
 
-    let mut obstacles = FxHashSet::with_capacity_and_hasher(2024, BuildHasherDefault::default());
+    let mut obstacles = FxHashSet::with_capacity_and_hasher(2024, FxBuildHasher);
 
     for StealthDirection(potential_obstacle, starting_direction) in visited {
         if potential_obstacle == starting {
@@ -232,7 +232,7 @@ fn solve_second(input: (Point, Map)) -> i32 {
 
         let mut trace_position = potential_obstacle - starting_direction;
         let mut trace_direction = starting_direction;
-        let mut trace_visited: FxHashSet<(Point, Point)> = FxHashSet::with_capacity_and_hasher(200, BuildHasherDefault::default());
+        let mut trace_visited: FxHashSet<(Point, Point)> = FxHashSet::with_capacity_and_hasher(200, FxBuildHasher);
 
         loop {
             let trace_next = next_position(&map, &trace_position, &trace_direction, Some(&potential_obstacle));

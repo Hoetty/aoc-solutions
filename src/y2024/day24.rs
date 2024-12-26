@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fs, mem::swap, rc::Rc};
 
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 
 use crate::formatting::Solution;
 use crate::solutions;
