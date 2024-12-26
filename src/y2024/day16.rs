@@ -44,6 +44,7 @@ fn get_input(file: &str) -> Maze {
     }
 }
 
+#[inline(always)]
 fn right(direction: isize, width: usize) -> isize {
     match direction {
         1 => width as isize,
@@ -54,6 +55,7 @@ fn right(direction: isize, width: usize) -> isize {
     }
 }
 
+#[inline(always)]
 fn left(direction: isize, width: usize) -> isize {
     -right(direction, width)
 }

@@ -10,8 +10,8 @@ macro_rules! solutions {
         
             Solution::evaluated(
                 format!("Day {}", $day), 
-                &|| solve_first(input.clone()),
-                &|| solve_second(input.clone())
+                || solve_first(input.clone()),
+                || solve_second(input.clone())
             )
         }
     }
@@ -19,19 +19,19 @@ macro_rules! solutions {
 
 pub struct Solution {
     name: String,
-    solution_1: Box<dyn Display>,
+    solution_1: String,
     time_1: u128,
-    solution_2: Box<dyn Display>,
+    solution_2: String,
     time_2: u128,
 }
 
 impl Solution {
 
-    pub fn evaluated<S, T>(name: String, first: &dyn Fn() -> S, second: &dyn Fn() -> T) -> Solution where S: Display + 'static, T: Display + 'static {
+    pub fn evaluated<S: Display, T: Display, F, G>(name: String, first: F, second: G) -> Solution where F: FnOnce() -> S, G: FnOnce() -> T {
         let (first, time_first) = time(first);
         let (second, time_second) = time(second);
 
-        Solution { name, solution_1: Box::new(first), time_1: time_first, solution_2: Box::new(second), time_2: time_second }
+        Solution { name, solution_1: first.to_string(), time_1: time_first, solution_2: second.to_string(), time_2: time_second }
     }
 
     pub fn test(&self, year: &str) -> (bool, bool) {
@@ -39,12 +39,12 @@ impl Solution {
         let file = fs::read_to_string(format!("./expect/{year}/{filename}.txt")).unwrap();
         let (first, second) = file.split_once("\n").unwrap();
 
-        (self.solution_1.to_string() == first, self.solution_2.to_string() == second)
+        (self.solution_1 == first, self.solution_2 == second)
     }
 
 }
 
-pub fn time<T>(function: &dyn Fn() -> T) -> (T, u128) {
+pub fn time<T, F>(function: F) -> (T, u128) where F: FnOnce() -> T {
     let start = Instant::now();
     let value = function();
     let elapsed = start.elapsed().as_micros();
@@ -59,8 +59,9 @@ pub fn format_percentage(time: u128, total: u128) -> String {
     format!("{:.2}%", time as f64 / total as f64 * 100.0)
 }
 
-pub fn format_solution(solution: &dyn Display) -> String {
-    format!("{}", solution)
+#[inline(always)]
+pub fn format_solution(solution: &String) -> &String {
+    solution
 }
 
 pub fn format_test(passed: bool) -> String {
@@ -72,9 +73,9 @@ pub fn format_test(passed: bool) -> String {
 }
 
 pub fn time_color(time: u128) -> Color {
-    if time <= 1000 {
+    if time < 1000 {
         Color::FG_BRIGHT_GREEN
-    } else if time <= 10000 {
+    } else if time < 10000 {
         Color::FG_BRIGHT_YELLOW
     } else {
         Color::FG_BRIGHT_RED
@@ -111,8 +112,8 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
             failed.push(Cell::new(i + 2, 3));
         }
 
-        builder.push_record([&solution.name, "#1", &format_solution(&solution.solution_1), &format_test(passed_1) , &format_time(solution.time_1), &format_percentage(solution.time_1, total_time)]);
-        builder.push_record(["", "#2", &format_solution(&solution.solution_2), &format_test(passed_2), &format_time(solution.time_2), &format_percentage(solution.time_2, total_time)]);
+        builder.push_record([&solution.name, "#1", format_solution(&solution.solution_1), &format_test(passed_1) , &format_time(solution.time_1), &format_percentage(solution.time_1, total_time)]);
+        builder.push_record(["", "#2", format_solution(&solution.solution_2), &format_test(passed_2), &format_time(solution.time_2), &format_percentage(solution.time_2, total_time)]);
         builder.push_record(["", "", "", &format_test(passed), &format_time(solution.time_1 + solution.time_2), &format_percentage(solution.time_1 + solution.time_2, total_time)]);
         builder.push_record([""]);
 
