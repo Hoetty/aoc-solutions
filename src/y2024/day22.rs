@@ -31,7 +31,6 @@ fn step(secret: u32) -> u32 {
     prune(step_unpruned(secret))
 }
 
-
 fn step_n_times(secret: u32, n: usize) -> u32 {
     let mut secret = secret;
 
