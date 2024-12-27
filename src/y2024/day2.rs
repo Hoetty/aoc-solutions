@@ -35,7 +35,7 @@ fn all_gradual(diffs: &[i8]) -> bool {
     diffs.iter().all(|diff| diff.abs() <= 3)
 }
 
-/// Number of safe reports
+/// ### Number of safe reports
 /// 
 /// Identify all reports, whose levels are either all gradually decreasing or all gradually increasing
 ///    and that change at least 1 and at most 3
@@ -47,7 +47,7 @@ fn solve_first(input: List) -> usize {
         .count()
 }
 
-/// Number of safe reports, with Problem Dampener
+/// ### Number of safe reports, with Problem Dampener
 /// 
 /// The same rules apply, as for part 1, but if a single level can be removed to make the report safe,
 ///    it is considered safe too

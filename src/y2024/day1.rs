@@ -25,7 +25,7 @@ fn get_input(file: &str) -> List {
     (left, right)
 }
 
-/// Total List Distance
+/// ### Total List Distance
 /// 
 /// Provided two lists of numbers,
 ///   sort both lists and then calculate the pairwise absolute difference
@@ -43,7 +43,7 @@ fn solve_first(input: List) -> u32 {
         .sum()
 }
 
-/// List Similarity Score
+/// ### List Similarity Score
 /// 
 /// Calculate how often each number from the left list appears in the right list (its frequency)
 /// Then sum all numbers from the left list multiplied by their respective frequency
