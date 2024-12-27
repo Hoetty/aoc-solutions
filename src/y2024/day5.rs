@@ -5,83 +5,99 @@ use crate::solutions;
 
 solutions!{2024, 5}
 
-type Rules = Vec<Vec<bool>>;
-type Orders = Vec<Vec<usize>>;
+type Rules = Vec<u128>;
+type Updates = Vec<Vec<usize>>;
 
-fn get_input(file: &str) -> (Rules, Orders) {
+/// Collect the ordering rules into a vec of u128,
+///    where the index into the vec is the left page, and all set bits indicate right pages
+/// 
+/// The updates are parsed as a vec of vecs of usizes
+fn get_input(file: &str) -> (Rules, Updates) {
     let file = fs::read_to_string(file).expect("No file there");
-    let (first, second) = file.split_once("\n\n").unwrap();
+    let (rule_string, updates_string) = file.split_once("\n\n").unwrap();
 
-    let r = first.lines().map(|line| {
-        let (a, b) = line.split_once("|").unwrap();
-        (a.parse().unwrap(), b.parse().unwrap())
+    let collected_rules = rule_string.lines().map(|line| {
+        let (left, right) = line.split_once("|").unwrap();
+
+        (left.parse().unwrap(), right.parse().unwrap())
     }).collect::<Vec<(usize, usize)>>();
 
-    let mut rules: Rules = Vec::new();
+    let mut rules: Rules = vec![0;100];
 
-    for (left, right) in r {
-        if rules.len() < (left + 1) {
-            rules.resize(left + 1, Vec::new());
-        }
-        
-        if rules[left].len() < (right + 1) {
-            rules[left].resize(right + 1, false);
-        }
-
-        rules[left][right] = true;
+    for (left_page, right_page) in collected_rules {
+        // Set the bit corresponding to the right page in the left pages number
+        rules[left_page] |= 1 << right_page;
     }
 
     (
         rules,
-        second.lines().map(|line| line.split_terminator(",").map(|s| s.parse().unwrap()).collect()).collect()
+        updates_string.lines()
+            .map(|line| line.split_terminator(",")
+                .map(|page_number| page_number.parse().unwrap())
+                .collect()
+            ).collect()
     )
 }
 
-fn solve_first(input: (Rules, Orders)) -> i32 {
-    let (rules, orders) = input;
+/// ### Correctly Ordered Pages
+/// 
+/// Sum the middle number of all updates whose pages are ordered according to the given ruleset of page orderings
+fn solve_first(input: (Rules, Updates)) -> usize {
+    let (rules, updates) = input;
 
     let mut sum = 0;
 
-    'outer: for order in orders {
-        for i in 0..order.len() {
+    // For each update, check for each page all preceeding pages, if they arent violating any rules
+    'outer: for update in updates {
+        for i in 0..update.len() {
+            let right_page = update[i];
             for j in 0..i {
-                if *rules[order[i]].get(order[j]).unwrap_or(&false) {
+                // Check if the page currently on the right has a rule, that states 
+                //    it should be on the left of the currently left page
+                // If so, then continue with the next update, as this one is not ordered correctly
+                if rules[right_page] & (1 << update[j]) != 0 {
                     continue 'outer;
                 }
             }
         }
 
-        sum += order[order.len() / 2];
+        // Add the middle number to the sum
+        let middle_page_number = update[update.len() / 2];
+        sum += middle_page_number;
     }
 
-    sum as i32
+    sum
 }
 
-fn solve_second(input: (Rules, Orders)) -> i32 {
-    let (rules, orders) = input;
+/// ### Corrected Page Orderings
+/// 
+/// Sum the middle numbers of all updates whose pages where corrected to respect the ruleset of page orderings
+fn solve_second(input: (Rules, Updates)) -> usize {
+    let (rules, updates) = input;
 
     let mut sum = 0;
 
-    for mut order in orders {
-        let mut swapped = false;
-        let mut i = 0;
-        'outer: while i < order.len() {
+    // Similar to part 1, but swap any violators to reestablish order
+    for mut update in updates {
+        let mut needed_correction = false;
+
+        for i in 0..update.len() {
+            let right_page = update[i];
             for j in 0..i {
-                if *rules[order[i]].get(order[j]).unwrap_or(&false) {
-                    order.swap(i, j);
-                    swapped = true;
-                    i -= 1;
-                    continue 'outer;
+                // If two pages dont fit a rule, then swap them and check again, starting a page further left
+                if rules[right_page] & (1 << update[j]) != 0 {
+                    update.swap(i, j);
+                    needed_correction = true;
                 }
             }
-            
-            i += 1;
         }
         
-        if swapped {
-            sum += order[order.len() / 2];
+        // Only if a swap has occured, add the middle page number
+        if needed_correction {
+            let middle_page_number = update[update.len() / 2];
+            sum += middle_page_number;
         }
     }
 
-    sum as i32
+    sum
 }
