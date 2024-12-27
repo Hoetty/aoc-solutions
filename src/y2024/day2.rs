@@ -19,19 +19,19 @@ fn get_input(file: &str) -> List {
 
 /// Checks if all difference are decreasing, indicated by them being negative
 #[inline(always)]
-fn all_decreasing(diffs: &Vec<i8>) -> bool {
+fn all_decreasing(diffs: &[i8]) -> bool {
     diffs.iter().all(|diff| diff.is_negative())
 }
 
 /// Checks if all differences are increasing, indicated by them being positive
 #[inline(always)]
-fn all_increasing(diffs: &Vec<i8>) -> bool {
+fn all_increasing(diffs: &[i8]) -> bool {
     diffs.iter().all(|diff| diff.is_positive())
 }
 
 /// Checks if all differences are gradual, meaning their absolute value is at most 3
 #[inline(always)]
-fn all_gradual(diffs: &Vec<i8>) -> bool {
+fn all_gradual(diffs: &[i8]) -> bool {
     diffs.iter().all(|diff| diff.abs() <= 3)
 }
 
