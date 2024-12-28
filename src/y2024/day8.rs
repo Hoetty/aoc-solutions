@@ -1,4 +1,6 @@
-use std::{collections::{HashMap, HashSet}, fs, ops::{Add, Sub}};
+use std::{fs, ops::{Add, Sub}};
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::formatting::Solution;
 use crate::solutions;
@@ -37,93 +39,108 @@ impl Sub for Vector2 {
     }
 }
 
-fn get_input(file: &str) -> (HashMap<char, Vec<Vector2>>, Vector2) {
-    let file: Vec<Vec<char>> = fs::read_to_string(file).expect("No file there").lines().map(|l| l.chars().collect()).collect();
+fn get_input(file: &str) -> (FxHashMap<char, Vec<Vector2>>, Vector2) {
+    let file: Vec<Vec<char>> = fs::read_to_string(file)
+        .expect("No file there")
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect();
 
-    let mut antennas = HashMap::new();
+    let mut antennas = FxHashMap::default();
     let mut width = 0;
-    let mut height = 0;
+    let height = file.len();
 
     for (y, char_list) in file.iter().enumerate() {
-        for (x, c) in char_list.iter().enumerate() {
-            if y == 0 {
-                width += 1;
-            }
-            if !c.is_alphanumeric() {
+        if y == 0 {
+            width = char_list.len();
+        }
+
+        for (x, antenna) in char_list.iter().enumerate() {
+            if !antenna.is_alphanumeric() {
                 continue;
             }
 
-            if !antennas.contains_key(c) {
-                antennas.insert(*c, Vec::new());
-            }
-
-            antennas.get_mut(c).unwrap().push(Vector2::new(x as i32, y as i32));
+            antennas.entry(*antenna)
+                .or_insert(Vec::new())
+                .push(Vector2::new(x as i32, y as i32))
         }
-        height += 1;
     }
 
-    (antennas, Vector2::new(width, height))
+    (antennas, Vector2::new(width as i32, height as i32))
 }
 
-fn solve_first(input: &(HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
-    let mut stations: HashSet<Vector2> = HashSet::new();
+/// Checks if the position is still in bounds
+#[inline]
+fn in_bounds(position: &Vector2, dimensions: &Vector2) -> bool {
+    position.x >= 0 && position.y >= 0 && position.x < dimensions.x && position.y < dimensions.y
+}
+
+/// ### Antenna Antinodes
+/// 
+/// For each pair of antennas of the same pair, calculate the antinode locations
+/// Return the number of unique antinode locations that are in bounds
+fn solve_first(input: &(FxHashMap<char, Vec<Vector2>>, Vector2)) -> usize {
+    let mut stations: FxHashSet<Vector2> = FxHashSet::default();
 
     let (antennas, dimensions) = input;
 
     for locations in antennas.values() {
-        for i in 0..locations.len() {
-            for j in 0..i {
-                let first = locations[i];
-                let second = locations[j];
-
-                let diff = first - second;
-                stations.insert(first + diff);
-                stations.insert(second - diff);
+        for (i, first_location) in locations.iter().enumerate() {
+            for second_location in locations.iter().take(i) {
+                // Calculate the vector from the second to the first station
+                // S -> F
+                // Add this vector to the first stations position
+                // S    F -> I
+                // And subtract it from the second station
+                // I <- S    F
+                // These are the antinode locations
+                let second_to_first = *first_location - *second_location;
+                stations.insert(*first_location + second_to_first);
+                stations.insert(*second_location - second_to_first);
             }
         }
     }
 
-    stations.iter().filter(|v| v.x >= 0 && v.y >= 0 && v.x < dimensions.x && v.y < dimensions.y).count() as i32
+    stations
+        .iter()
+        .filter(|station| in_bounds(&station, dimensions))
+        .count()
 }
 
-fn solve_second(input: &(HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
-    let mut stations: HashSet<Vector2> = HashSet::new();
+/// ### Antenna Antinode Rows
+/// 
+/// For each pair of antennas of the same pair, calculate the rows of antinode locations they invoke
+/// Return the number of unique antinode locations that are in bounds
+fn solve_second(input: &(FxHashMap<char, Vec<Vector2>>, Vector2)) -> usize {
+    let mut stations: FxHashSet<Vector2> = FxHashSet::default();
 
     let (antennas, dimensions) = input;
 
     for locations in antennas.values() {
-        for i in 0..locations.len() {
-            for j in 0..i {
-                let first = locations[i];
-                let second = locations[j];
-
-                // This would include 2, 2 spacings narrowed down to 1, 1. This case is guaranteed not to happen
-                // let diff = (*first - *second).scaled_down();
-                let diff = first - second;
+        for (i, first_location) in locations.iter().enumerate() {
+            for second_location in locations.iter().take(i) {
+                let second_to_first = *first_location - *second_location;
+                let mut direction = 1;
                 let mut i = 0;
                 loop {
-                    let current = first + diff.scaled(i);
-                    if !(current.x >= 0 && current.y >= 0 && current.x < dimensions.x && current.y < dimensions.y) {
+                    let current_antinode = *first_location + second_to_first.scaled(i);
+                    let not_in_bounds = !in_bounds(&current_antinode, dimensions);
+
+                    if direction == 1 && not_in_bounds {
+                        // If the first direction has been plotted, continue with the second
+                        direction = -1;
+                        i = 0;
+                        continue;
+                    } else if direction == -1 && not_in_bounds {
                         break;
                     }
 
-                    stations.insert(current);
-                    i += 1;
-                }
-
-                let mut i = 0;
-                loop {
-                    let current = first + diff.scaled(i);
-                    if !(current.x >= 0 && current.y >= 0 && current.x < dimensions.x && current.y < dimensions.y) {
-                        break;
-                    }
-
-                    stations.insert(current);
-                    i -= 1;
+                    stations.insert(current_antinode);
+                    i += direction;
                 }
             }
         }
     }
 
-    stations.len() as i32
+    stations.len()
 }
