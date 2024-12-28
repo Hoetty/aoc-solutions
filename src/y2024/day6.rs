@@ -2,7 +2,6 @@ use std::{fs, hash::Hash};
 
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 6}

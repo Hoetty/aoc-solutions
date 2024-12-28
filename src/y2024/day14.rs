@@ -1,6 +1,5 @@
 use std::{fs::{self, OpenOptions}, io::Write};
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 14}

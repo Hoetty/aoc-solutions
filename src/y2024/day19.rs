@@ -2,7 +2,6 @@ use std::{fs::{self}, ops::{BitAnd, BitOr, BitXor, Shl, Shr}};
 
 use rustc_hash::FxHashMap;
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 19}

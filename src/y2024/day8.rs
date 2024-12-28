@@ -2,7 +2,6 @@ use std::{fs, ops::{Add, Sub}};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 8}

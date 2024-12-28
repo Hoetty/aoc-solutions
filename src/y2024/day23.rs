@@ -3,7 +3,6 @@ use std::fs;
 use rustc_hash::FxHashSet;
 use petgraph::graph::{NodeIndex, UnGraph};
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 23}

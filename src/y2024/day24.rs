@@ -2,7 +2,6 @@ use std::{cmp::Ordering, fs, mem::swap, rc::Rc};
 
 use rustc_hash::FxHashMap;
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 24}

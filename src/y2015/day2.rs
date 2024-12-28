@@ -1,6 +1,5 @@
 use std::{cmp::min, fs};
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2015, 2}

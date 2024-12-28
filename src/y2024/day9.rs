@@ -1,6 +1,5 @@
 use std::{collections::VecDeque, fs};
 
-use crate::formatting::Solution;
 use crate::solutions;
 
 solutions!{2024, 9}

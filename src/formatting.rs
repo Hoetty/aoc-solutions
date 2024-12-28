@@ -5,6 +5,7 @@ use tabled::{builder::Builder, settings::{object::{Cell, Columns, Object, Row, R
 macro_rules! solutions {
     ($year: expr, $day: expr) => {
         use $crate::formatting::time;
+        use $crate::formatting::Solution;
 
         pub fn solutions() -> Solution {
             let filename = format!("inputs/{}/day{}.txt", $year, $day);
