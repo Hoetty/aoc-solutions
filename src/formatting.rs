@@ -105,15 +105,15 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
         passed_all = passed_all && passed;
 
         if !passed_1 {
-            failed.push(Cell::new(i, 3));
-        }
-
-        if !passed_2 {
             failed.push(Cell::new(i + 1, 3));
         }
 
-        if !passed {
+        if !passed_2 {
             failed.push(Cell::new(i + 2, 3));
+        }
+
+        if !passed {
+            failed.push(Cell::new(i + 3, 3));
         }
 
         builder.push_record([&solution.name, "I", "", "", &format_time(solution.input_time), &format_percentage(solution.input_time, total_time)]);
