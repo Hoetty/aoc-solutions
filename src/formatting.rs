@@ -4,7 +4,7 @@ use tabled::{builder::Builder, settings::{object::{Cell, Columns, Object, Row, R
 #[macro_export]
 macro_rules! solutions {
     ($year: expr, $day: expr) => {
-        use crate::formatting::time;
+        use $crate::formatting::time;
 
         pub fn solutions() -> Solution {
             let filename = format!("inputs/{}/day{}.txt", $year, $day);
@@ -12,8 +12,8 @@ macro_rules! solutions {
         
             Solution::evaluated(
                 format!("Day {}", $day), 
-                || solve_first(input.clone()),
-                || solve_second(input.clone()),
+                || solve_first(&input),
+                || solve_second(&input),
                 input_time
             )
         }

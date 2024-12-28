@@ -12,7 +12,7 @@ fn get_input(file: &str) -> Vec<Vec<char>> {
 /// ### XMAS Word Search
 /// 
 /// Find all occurences of the word "XMAS" in any direction on the grid
-fn solve_first(input: Vec<Vec<char>>) -> i32 {
+fn solve_first(input: &[Vec<char>]) -> i32 {
     let puzzle_height = input.len() as isize;
     let puzzle_width = input[0].len() as isize;
     let mut xmas_count = 0;
@@ -60,7 +60,7 @@ fn is_x_mas(tl: char, tr: char, bl: char, br: char) -> bool {
 /// ### X-Mas Word Search
 /// 
 /// Finds all MAS assembled in an X Shape in the puzzle grid
-fn solve_second(input: Vec<Vec<char>>) -> i32 {
+fn solve_second(input: &[Vec<char>]) -> i32 {
     let puzzle_height = input.len();
     let puzzle_width = input[0].len();
     

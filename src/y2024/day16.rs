@@ -63,7 +63,7 @@ fn left(direction: isize, width: usize) -> isize {
 // Position, Direction, Length
 type State = (usize, isize, usize);
 
-fn solve_first(input: Maze) -> usize {
+fn solve_first(input: &Maze) -> usize {
     let mut visited: FxHashSet<(usize, isize)> = FxHashSet::default();
     let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::default();
 
@@ -135,7 +135,7 @@ struct PathPoint {
     last: Option<Rc<PathPoint>>
 }
 
-fn solve_second(input: Maze) -> usize {
+fn solve_second(input: &Maze) -> usize {
     let mut visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(4096, FxBuildHasher);
     let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(256, FxBuildHasher);
 

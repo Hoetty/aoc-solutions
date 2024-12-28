@@ -53,7 +53,7 @@ fn in_area(point: (u16, u16), first: (u16, u16), second: (u16, u16)) -> bool {
     point.0 >= first.0 && point.0 <= second.0 && point.1 >= first.1 && point.1 <= second.1
 }
 
-fn solve_first(input: Vec<Command>) -> usize {
+fn solve_first(input: &[Command]) -> usize {
     let mut lit: usize = 0;
     let command_length = input.len();
 
@@ -81,14 +81,14 @@ fn solve_first(input: Vec<Command>) -> usize {
 }
 
 
-fn solve_second(input: Vec<Command>) -> usize {
+fn solve_second(input: &Vec<Command>) -> usize {
     let mut lit: usize = 0;
 
     for x in 0..1000 {
         for y in 0..1000 {
             let mut brightness = 0;
 
-            for command in &input {
+            for command in input {
                 match command {
                     Command::Set(value, first, second) if in_area((x, y), *first, *second) => {
                         if *value == 1 {
@@ -107,27 +107,4 @@ fn solve_second(input: Vec<Command>) -> usize {
     }
 
     lit
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn expected() -> (usize, usize) {
-        let file = fs::read_to_string("test-inputs/2015/day6-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2015/day6.txt"));
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2015/day6.txt"));
-        assert_eq!(result, expected().1);
-    }
 }

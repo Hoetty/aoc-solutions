@@ -11,7 +11,7 @@ fn get_input(file: &str) -> Vec<Vec<char>> {
     fs::read_to_string(file).expect("No file there").lines().map(|l| l.chars().collect()).collect()
 }
 
-fn solve_first(input: Vec<Vec<char>>) -> u64 {
+fn solve_first(input: &[Vec<char>]) -> u64 {
     let height = input.len();
     let width = input[0].len();
 
@@ -74,7 +74,7 @@ fn solve_first(input: Vec<Vec<char>>) -> u64 {
     price
 }
 
-fn solve_second(input: Vec<Vec<char>>) -> u64 {
+fn solve_second(input: &[Vec<char>]) -> u64 {
     let height = input.len();
     let width = input[0].len();
 

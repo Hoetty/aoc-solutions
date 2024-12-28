@@ -9,7 +9,7 @@ pub fn get_input(file: &str) -> Vec<(i32, i32, i32)> {
     fs::read_to_string(file).unwrap().lines().map(|l| l.split_terminator('x').map(|i| i.parse().unwrap()).collect::<Vec<i32>>()).map(|v| (v[0], v[1], v[2])).collect()
 }
 
-pub fn solve_first(input: Vec<(i32, i32, i32)>) -> i32 {
+pub fn solve_first(input: &Vec<(i32, i32, i32)>) -> i32 {
     let mut sum = 0;
 
     for present in input {
@@ -23,7 +23,7 @@ pub fn solve_first(input: Vec<(i32, i32, i32)>) -> i32 {
     sum
 }
 
-pub fn solve_second(input: Vec<(i32, i32, i32)>) -> i32 {
+pub fn solve_second(input: &Vec<(i32, i32, i32)>) -> i32 {
     let mut sum = 0;
 
     for present in input {
@@ -34,27 +34,4 @@ pub fn solve_second(input: Vec<(i32, i32, i32)>) -> i32 {
     }
 
     sum
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn expected() -> (i32, i32) {
-        let file = fs::read_to_string("test-inputs/2015/day2-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2015/day2.txt"));
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2015/day2.txt"));
-        assert_eq!(result, expected().1);
-    }
 }

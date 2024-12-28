@@ -20,8 +20,8 @@ fn get_input(file: &str) -> UnGraph<(), (), u16> {
 }
 
 // https://www.cs.cornell.edu/courses/cs6241/2019sp/readings/Chiba-1985-arboricity.pdf
-fn solve_first(input: UnGraph<(), (), u16>) -> usize {
-    let mut graph = input;
+fn solve_first(input: &UnGraph<(), (), u16>) -> usize {
+    let mut graph = input.clone();
 
     let mut nodes: Vec<NodeIndex<u16>> = graph.node_indices().collect();
     nodes.sort_by_cached_key(|node| usize::MAX - graph.neighbors(*node).count());
@@ -86,8 +86,8 @@ fn bron_kerboschl(graph: &UnGraph<(), (), u16>, r: FxHashSet<NodeIndex<u16>>, p:
     }
 }
 
-fn solve_second(input: UnGraph<(), (), u16>) -> String {
-    let result = bron_kerboschl(&input, FxHashSet::default(), FxHashSet::from_iter(input.node_indices()), FxHashSet::default());
+fn solve_second(input: &UnGraph<(), (), u16>) -> String {
+    let result = bron_kerboschl(input, FxHashSet::default(), FxHashSet::from_iter(input.node_indices()), FxHashSet::default());
 
     let mut pcs: Vec<NodeIndex<u16>> = result.unwrap().iter().copied().collect();
     pcs.sort();

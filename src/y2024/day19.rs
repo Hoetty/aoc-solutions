@@ -174,7 +174,7 @@ fn is_possible(target: Pattern, patterns: &Vec<Vec<Pattern>>, cache: &mut FxHash
     false
 }
 
-fn solve_first(input: (Vec<Vec<Pattern>>, Vec<Pattern>)) -> usize {
+fn solve_first(input: &(Vec<Vec<Pattern>>, Vec<Pattern>)) -> usize {
     input.1.iter().filter(|target| is_possible(**target, &input.0, &mut FxHashMap::default())).count()
 }
 
@@ -210,6 +210,6 @@ fn possibilities(target: Pattern, patterns: &Vec<Vec<Pattern>>, cache: &mut FxHa
     found
 }
 
-fn solve_second(input: (Vec<Vec<Pattern>>, Vec<Pattern>)) -> u64 {
+fn solve_second(input: &(Vec<Vec<Pattern>>, Vec<Pattern>)) -> u64 {
     input.1.iter().map(|target| possibilities(*target, &input.0, &mut FxHashMap::default())).sum()
 }

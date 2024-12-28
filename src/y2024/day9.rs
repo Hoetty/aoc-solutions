@@ -9,7 +9,7 @@ fn get_input(file: &str) -> String {
     fs::read_to_string(file).expect("No file there")
 }
 
-fn solve_first(input: String) -> u64 {
+fn solve_first(input: &str) -> u64 {
     let mut files: Vec<(u16, usize)> = Vec::with_capacity(64);
     let mut empty_space: Vec<usize> = Vec::with_capacity(64);
 
@@ -60,7 +60,7 @@ fn solve_first(input: String) -> u64 {
     new_filesystem.iter().map(|(id, i)| *id as usize * *i).sum::<usize>() as u64
 }
 
-fn solve_second(input: String) -> u64 {
+fn solve_second(input: &str) -> u64 {
     let mut free_space: Vec<VecDeque<usize>> = vec![VecDeque::new(); 10];
     let mut files: Vec<(u16, usize, u8)> = Vec::new();
     

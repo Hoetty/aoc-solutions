@@ -41,13 +41,13 @@ fn step_n_times(secret: u32, n: usize) -> u32 {
     prune(secret)
 }
 
-fn solve_first(input: Vec<u32>) -> u64 {
+fn solve_first(input: &[u32]) -> u64 {
     input.iter().map(|num| step_n_times(*num, 2000) as u64).sum()
 }
 
 const MASK: usize = (1 << 20) - 1;
 
-fn solve_second(input: Vec<u32>) -> u16 {
+fn solve_second(input: &[u32]) -> u16 {
     let mut scores: Vec<u16> = vec![0; 1 << 20];
     let mut seen: Vec<u16> = vec![0; 1 << 20];
 

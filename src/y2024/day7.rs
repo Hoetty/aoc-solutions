@@ -60,7 +60,7 @@ fn is_possible(target: i64, rest: &[i64]) -> bool {
     }
 }
 
-fn solve_first(input: Vec<(i64, Vec<i64>)>) -> i64 {
+fn solve_first(input: &[(i64, Vec<i64>)]) -> i64 {
     input.iter()
         .map(|(target, operands)| (target, operands.iter().rev().copied().collect::<Vec<i64>>()))
         .filter(|(target, operands)| is_possible(**target, &operands[0..operands.len()]))
@@ -90,7 +90,7 @@ fn is_possible_with_concat(target: i64, rest: &[i64]) -> bool {
     }
 }
 
-fn solve_second(input: Vec<(i64, Vec<i64>)>) -> i64 {
+fn solve_second(input: &[(i64, Vec<i64>)]) -> i64 {
     input.iter()
         .map(|(target, operands)| (target, operands.iter().rev().copied().collect::<Vec<i64>>()))
         .filter(|(target, operands)| is_possible_with_concat(**target, &operands[0..operands.len()]))

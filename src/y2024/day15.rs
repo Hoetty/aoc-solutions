@@ -64,8 +64,8 @@ fn get_input(file: &str) -> Map {
     }
 }
 
-fn solve_first(input: Map) -> usize {
-    let mut input = input;
+fn solve_first(input: &Map) -> usize {
+    let mut input = input.clone();
     let mut robot_position = input.robot_position;
     for move_index in 0..input.moves.len() {
         let direction = input.moves[move_index];
@@ -175,11 +175,11 @@ fn dump_map(tiles: &[WideTile], width: usize) {
     }
 }
 
-fn solve_second(input: Map) -> usize {
+fn solve_second(input: &Map) -> usize {
     let width = input.width * 2;
     let mut tiles: Vec<WideTile> = Vec::with_capacity(input.tiles.len() * 2);
 
-    for tile in input.tiles {
+    for tile in &input.tiles {
         let (left, right) = match tile {
             Tile::Robot => (WideTile::Robot, WideTile::Air),
             Tile::Obstacle => (WideTile::Obstacle, WideTile::Obstacle),

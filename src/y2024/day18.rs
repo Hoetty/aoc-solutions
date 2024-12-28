@@ -58,17 +58,17 @@ fn solve_n(n: usize, input: &[(u8, u8)], dimensions: (usize, usize)) -> i64
     tiles[dimensions.0 * dimensions.1 - 1]
 }
 
-fn solve_first(input: Vec<(u8, u8)>) -> i64 {
-    solve_n(1024, &input, DIMENSIONS)
+fn solve_first(input: &[(u8, u8)]) -> i64 {
+    solve_n(1024, input, DIMENSIONS)
 }
 
-fn solve_second(input: Vec<(u8, u8)>) -> String {
+fn solve_second(input: &[(u8, u8)]) -> String {
     let mut bottom = 0;
     let mut top = DIMENSIONS.0 * DIMENSIONS.1;
 
     while bottom != top - 1 {
         let i = (bottom + top) / 2;
-        let n = solve_n(i, &input, DIMENSIONS);
+        let n = solve_n(i, input, DIMENSIONS);
 
         if n == i64::MAX {
             top = i;

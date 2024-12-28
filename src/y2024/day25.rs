@@ -39,10 +39,10 @@ fn get_input(file: &str) -> (Vec<Heights>, Vec<Heights>) {
 
 const HEIGHT: u8 = 7;
 
-fn solve_first(input: (Vec<Heights>, Vec<Heights>)) -> u64 {
+fn solve_first(input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
     let mut fitting = 0;
 
-    for template in input.0 {
+    for template in &input.0 {
         for key in &input.1 {
             if template.0 + key.0 <= HEIGHT && template.1 + key.1 <= HEIGHT && template.2 + key.2 <= HEIGHT && template.3 + key.3 <= HEIGHT && template.4 + key.4 <= HEIGHT {
                 fitting += 1;
@@ -53,6 +53,6 @@ fn solve_first(input: (Vec<Heights>, Vec<Heights>)) -> u64 {
     fitting
 }
 
-fn solve_second(_input: (Vec<Heights>, Vec<Heights>)) -> u64 {
+fn solve_second(_input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
     0
 }

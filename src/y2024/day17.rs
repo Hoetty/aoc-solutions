@@ -30,7 +30,7 @@ fn combo(value: u8, a: u64, b: u64, c: u64) -> u64 {
     }
 }
 
-fn solve_first(input: ((u64, u64, u64), Vec<u8>)) -> String {
+fn solve_first(input: &((u64, u64, u64), Vec<u8>)) -> String {
     let ((mut a, mut b, mut c), instructions) = input;
 
     let mut output: Vec<u8> = Vec::new();
@@ -83,10 +83,10 @@ fn bytes_num(nums: &[u8]) -> u64 {
     carry
 }
 
-fn solve_second(input: ((u64, u64, u64), Vec<u8>)) -> u64 {
+fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
     let ((_ao, bo, co), instructions) = input;
 
-    let target = bytes_num(&instructions);
+    let target = bytes_num(instructions);
 
     let mut queue: VecDeque<(u64, u8)> = VecDeque::new();
 
@@ -106,8 +106,8 @@ fn solve_second(input: ((u64, u64, u64), Vec<u8>)) -> u64 {
             let try_value = start_value | (i << (3 * position));
 
             let mut a = try_value;
-            let mut b = bo;
-            let mut c = co;
+            let mut b = *bo;
+            let mut c = *co;
     
             let mut output: Vec<u8> = Vec::new();
         

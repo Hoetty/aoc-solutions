@@ -27,7 +27,7 @@ fn is_integer(num: f64) -> bool {
     (num - num.round()).abs() < 0.001
 }
 
-fn solve_first(input: Vec<MachineLayout>) -> u64 {
+fn solve_first(input: &[MachineLayout]) -> u64 {
     input.iter().map(|((ax, ay), (bx, by), (px, py))| {
         let ((ax, ay), (bx, by), (px, py)) = ((*ax as f64, *ay as f64), (*bx as f64, *by as f64), (*px as f64, *py as f64));
         
@@ -61,7 +61,7 @@ fn solve_first(input: Vec<MachineLayout>) -> u64 {
     }).sum()
 }
 
-fn solve_second(input: Vec<MachineLayout>) -> u64 {
+fn solve_second(input: &[MachineLayout]) -> u64 {
     input.iter().map(|((ax, ay), (bx, by), (px, py))| {
         let ((ax, ay), (bx, by), (px, py)) = ((*ax as f64, *ay as f64), (*bx as f64, *by as f64), (*px as f64 + 10000000000000.0, *py as f64 + 10000000000000.0));
         

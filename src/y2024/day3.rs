@@ -200,8 +200,8 @@ impl Parser {
 /// ### Sum of Products
 /// 
 /// Scans the input string for all mul(123,123) instructions and sums the resulting products
-fn solve_first(input: String) -> u32 {
-    Parser::new(&input)
+fn solve_first(input: &str) -> u32 {
+    Parser::new(input)
         .parse_muls()
 }
 
@@ -210,7 +210,7 @@ fn solve_first(input: String) -> u32 {
 /// 
 /// Scans the input string for all mul(123,123) instructions and sums the resulting products,
 ///    but stops recognising muls after parsing a dont'() instructions until a do() instruction is parsed
-fn solve_second(input: String) -> u32 {
-    Parser::new(&input)
+fn solve_second(input: &str) -> u32 {
+    Parser::new(input)
         .parse_muls_aware()
 }

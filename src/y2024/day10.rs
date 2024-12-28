@@ -38,7 +38,7 @@ fn get_input(file: &str) -> (Vec<Vec<u8>>, Vec<Spot>) {
     (map, starting)
 }
 
-fn solve_first(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
+fn solve_first(input: &(Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
     let (map, starting) = input;
 
     let width = map[0].len();
@@ -47,7 +47,7 @@ fn solve_first(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
 
     for base in starting {
         let mut heads: FxHashSet<Spot> = FxHashSet::with_capacity_and_hasher(10, FxBuildHasher);
-        let mut queue = VecDeque::from([base]);
+        let mut queue = VecDeque::from([*base]);
 
         while !queue.is_empty() {
             let current = queue.pop_front().unwrap();
@@ -81,7 +81,7 @@ fn solve_first(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
     sum as u64
 }
 
-fn solve_second(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
+fn solve_second(input: &(Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
     let (map, starting) = input;
 
     let width = map[0].len();
@@ -89,7 +89,7 @@ fn solve_second(input: (Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
     let mut sum = 0;
 
     for base in starting {
-        let mut queue = VecDeque::from([base]);
+        let mut queue = VecDeque::from([*base]);
 
         while !queue.is_empty() {
             let current = queue.pop_front().unwrap();

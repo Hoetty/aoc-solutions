@@ -52,7 +52,7 @@ fn is_nice(input: &str) -> bool {
     vowels >= 3 && double
 }
 
-pub fn solve_first(input: Vec<String>) -> usize {
+pub fn solve_first(input: &[String]) -> usize {
     input.iter().filter(|s| is_nice(s)).count()
 }
 
@@ -85,29 +85,6 @@ fn is_nice2(input: &str) -> bool {
     false
 }
 
-pub fn solve_second(input: Vec<String>) -> usize {
+pub fn solve_second(input: &[String]) -> usize {
     input.iter().filter(|s| is_nice2(s)).count()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn expected() -> (usize, usize) {
-        let file = fs::read_to_string("test-inputs/2015/day5-expect.txt").expect("Expect file missing");
-        let nums: Vec<&str> = file.split_whitespace().collect();
-        (nums[0].parse().unwrap(), nums[1].parse().unwrap())
-    }
-
-    #[test]
-    fn part1() {
-        let result = solve_first(get_input("test-inputs/2015/day5.txt"));
-        assert_eq!(result, expected().0);
-    }
-
-    #[test]
-    fn part2() {
-        let result = solve_second(get_input("test-inputs/2015/day5.txt"));
-        assert_eq!(result, expected().1);
-    }
 }

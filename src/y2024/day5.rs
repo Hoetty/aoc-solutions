@@ -42,7 +42,7 @@ fn get_input(file: &str) -> (Rules, Updates) {
 /// ### Correctly Ordered Pages
 /// 
 /// Sum the middle number of all updates whose pages are ordered according to the given ruleset of page orderings
-fn solve_first(input: (Rules, Updates)) -> usize {
+fn solve_first(input: &(Rules, Updates)) -> usize {
     let (rules, updates) = input;
 
     let mut sum = 0;
@@ -51,11 +51,11 @@ fn solve_first(input: (Rules, Updates)) -> usize {
     'outer: for update in updates {
         for i in 0..update.len() {
             let right_page = update[i];
-            for j in 0..i {
+            for left_page in update.iter().take(i) {
                 // Check if the page currently on the right has a rule, that states 
                 //    it should be on the left of the currently left page
                 // If so, then continue with the next update, as this one is not ordered correctly
-                if rules[right_page] & (1 << update[j]) != 0 {
+                if rules[right_page] & (1 << left_page) != 0 {
                     continue 'outer;
                 }
             }
@@ -72,8 +72,9 @@ fn solve_first(input: (Rules, Updates)) -> usize {
 /// ### Corrected Page Orderings
 /// 
 /// Sum the middle numbers of all updates whose pages where corrected to respect the ruleset of page orderings
-fn solve_second(input: (Rules, Updates)) -> usize {
+fn solve_second(input: &(Rules, Updates)) -> usize {
     let (rules, updates) = input;
+    let updates = updates.clone();
 
     let mut sum = 0;
 

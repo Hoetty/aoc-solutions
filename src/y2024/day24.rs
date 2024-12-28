@@ -81,7 +81,7 @@ fn evaluate(equation: &Equation, table: &FxHashMap<u32, Equation>, cache: &mut F
 }
 
 
-fn solve_first(input: FxHashMap<u32, Equation> ) -> u64 {
+fn solve_first(input: &FxHashMap<u32, Equation> ) -> u64 {
     let mut zgates: Vec<u32> = input.keys().filter(|gate| (**gate >> 16) as u8 == b'z').copied().collect();
     zgates.sort();
 
@@ -89,7 +89,7 @@ fn solve_first(input: FxHashMap<u32, Equation> ) -> u64 {
     let mut cache: FxHashMap<u32, bool> = FxHashMap::default();
 
     for z in zgates.iter().rev() {
-        num = (num << 1) | evaluate(input.get(z).unwrap(), &input, &mut cache) as u64;
+        num = (num << 1) | evaluate(input.get(z).unwrap(), input, &mut cache) as u64;
     }
 
     num
@@ -257,13 +257,13 @@ fn num_to_str(num: u32) -> String {
     [(num >> 16) as u8 as char, ((num >> 8) & 0xFF) as u8 as char, (num & 0xFF) as u8 as char].iter().collect()
 }
 
-fn solve_second(input: FxHashMap<u32, Equation> ) -> String {
+fn solve_second(input: &FxHashMap<u32, Equation> ) -> String {
     let mut zgates: Vec<u32> = input.keys().filter(|gate| (**gate >> 16) as u8 == b'z').copied().collect();
     zgates.sort();
     let mut cache: FxHashMap<u32, Rc<Expr>> = FxHashMap::default();
 
     for z in zgates.iter() {
-        let expr = Rc::new(parse(*z, &input, &mut cache));
+        let expr = Rc::new(parse(*z, input, &mut cache));
         cache.insert(*z, expr);
     }
 

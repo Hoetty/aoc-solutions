@@ -65,12 +65,12 @@ fn get_input(file: &str) -> (HashMap<char, Vec<Vector2>>, Vector2) {
     (antennas, Vector2::new(width, height))
 }
 
-fn solve_first(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
+fn solve_first(input: &(HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     let mut stations: HashSet<Vector2> = HashSet::new();
 
     let (antennas, dimensions) = input;
 
-    for (_, locations) in antennas {
+    for locations in antennas.values() {
         for i in 0..locations.len() {
             for j in 0..i {
                 let first = locations[i];
@@ -86,12 +86,12 @@ fn solve_first(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     stations.iter().filter(|v| v.x >= 0 && v.y >= 0 && v.x < dimensions.x && v.y < dimensions.y).count() as i32
 }
 
-fn solve_second(input: (HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
+fn solve_second(input: &(HashMap<char, Vec<Vector2>>, Vector2)) -> i32 {
     let mut stations: HashSet<Vector2> = HashSet::new();
 
     let (antennas, dimensions) = input;
 
-    for (_, locations) in antennas {
+    for locations in antennas.values() {
         for i in 0..locations.len() {
             for j in 0..i {
                 let first = locations[i];

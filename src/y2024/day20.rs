@@ -44,7 +44,7 @@ fn get_input(file: &str) -> Maze {
 
 const MIN_SKIP_DISTANCE: u32 = 100;
 
-fn solve_first(input: Maze) -> usize {
+fn solve_first(input: &Maze) -> usize {
     let mut tiles: Vec<u16> = input.tiles.iter().map(|b| if *b { u16::MAX - 1 } else { u16::MAX }).collect();
     let area = tiles.len();
     let floor = input.width * 2;
@@ -99,7 +99,7 @@ fn solve_first(input: Maze) -> usize {
 
 const CHEAT_DISTANCE: usize = 20;
 
-fn solve_second(input: Maze) -> usize {
+fn solve_second(input: &Maze) -> usize {
     let mut tiles: Vec<u16> = input.tiles.iter().map(|b| if *b { 0 } else { u16::MAX }).collect();
     let area = tiles.len();
 

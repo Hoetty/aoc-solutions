@@ -39,7 +39,7 @@ fn all_gradual(diffs: &[i8]) -> bool {
 /// 
 /// Identify all reports, whose levels are either all gradually decreasing or all gradually increasing
 ///    and that change at least 1 and at most 3
-fn solve_first(input: List) -> usize {
+fn solve_first(input: &List) -> usize {
     input.iter()
         .map(|report| report.windows(2).map(|levels| levels[0] - levels[1]).collect::<Vec<i8>>())
         .filter(|diffs| all_decreasing(diffs) || all_increasing(diffs))
@@ -51,7 +51,7 @@ fn solve_first(input: List) -> usize {
 /// 
 /// The same rules apply, as for part 1, but if a single level can be removed to make the report safe,
 ///    it is considered safe too
-fn solve_second(input: List) -> usize {
+fn solve_second(input: &List) -> usize {
     let count_all = input.len();
 
     // Collect all bad reports

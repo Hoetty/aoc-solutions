@@ -114,8 +114,8 @@ fn get_input(file: &str) -> Map {
     }
 }
 
-fn solve_first(input: Map) -> u64 {
-    let mut input = input;
+fn solve_first(input: &Map) -> u64 {
+    let mut input = input.clone();
     input.step(100);
 
     input.calculate_safety_score()
@@ -125,8 +125,8 @@ fn solve_first(input: Map) -> u64 {
 // In x direction -> width
 // In y direction -> height
 // We find both first spots and then calculate when the two frequencies will meet. Thats the christmas tree
-fn solve_second(input: Map) -> u64 {
-    let mut input = input;
+fn solve_second(input: &Map) -> u64 {
+    let mut input = input.clone();
     let mut i: u64 = 0;
 
     let mut x = 0;

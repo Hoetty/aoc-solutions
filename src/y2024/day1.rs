@@ -31,8 +31,8 @@ fn get_input(file: &str) -> List {
 ///   sort both lists and then calculate the pairwise absolute difference
 /// The sum of all differences is the total distance of the two lists
 /// 
-fn solve_first(input: List) -> u32 {
-    let (mut left, mut right) = input;
+fn solve_first(input: &List) -> u32 {
+    let (mut left, mut right) = input.clone();
 
     left.sort();
     right.sort();
@@ -48,16 +48,16 @@ fn solve_first(input: List) -> u32 {
 /// Calculate how often each number from the left list appears in the right list (its frequency)
 /// Then sum all numbers from the left list multiplied by their respective frequency
 /// 
-fn solve_second(input: List) -> u32 {
+fn solve_second(input: &List) -> u32 {
     let (left, right) = input;
     
     let mut frequencies: FxHashMap<u32, u8> = FxHashMap::with_capacity_and_hasher(1000, FxBuildHasher);
 
     // First calculate the frequencies of all numbers in the right list 
     for num in right {
-        match frequencies.get_mut(&num) {
+        match frequencies.get_mut(num) {
             Some(count) => { *count += 1; },
-            None => { frequencies.insert(num, 1); }
+            None => { frequencies.insert(*num, 1); }
         }
     }
 
