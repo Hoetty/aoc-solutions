@@ -4,14 +4,17 @@ use tabled::{builder::Builder, settings::{object::{Cell, Columns, Object, Row, R
 #[macro_export]
 macro_rules! solutions {
     ($year: expr, $day: expr) => {
+        use crate::formatting::time;
+
         pub fn solutions() -> Solution {
             let filename = format!("inputs/{}/day{}.txt", $year, $day);
-            let input = get_input(&filename);
+            let (input, input_time) = time(|| get_input(&filename));
         
             Solution::evaluated(
                 format!("Day {}", $day), 
                 || solve_first(input.clone()),
-                || solve_second(input.clone())
+                || solve_second(input.clone()),
+                input_time
             )
         }
     }
@@ -19,6 +22,7 @@ macro_rules! solutions {
 
 pub struct Solution {
     name: String,
+    input_time: u128,
     solution_1: String,
     time_1: u128,
     solution_2: String,
@@ -27,11 +31,11 @@ pub struct Solution {
 
 impl Solution {
 
-    pub fn evaluated<S: Display, T: Display, F, G>(name: String, first: F, second: G) -> Solution where F: FnOnce() -> S, G: FnOnce() -> T {
+    pub fn evaluated<S: Display, T: Display, F, G>(name: String, first: F, second: G, input_time: u128) -> Solution where F: FnOnce() -> S, G: FnOnce() -> T {
         let (first, time_first) = time(first);
         let (second, time_second) = time(second);
 
-        Solution { name, solution_1: first.to_string(), time_1: time_first, solution_2: second.to_string(), time_2: time_second }
+        Solution { name, input_time, solution_1: first.to_string(), time_1: time_first, solution_2: second.to_string(), time_2: time_second }
     }
 
     pub fn test(&self, year: &str) -> (bool, bool) {
@@ -83,7 +87,7 @@ pub fn time_color(time: u128) -> Color {
 }
 
 pub fn year(name: &str, solutions: Vec<Solution>) -> String {
-    let total_time: u128 = solutions.iter().map(|s| s.time_1 + s.time_2).sum::<u128>();
+    let total_time: u128 = solutions.iter().map(|s| s.time_1 + s.time_2 + s.input_time).sum::<u128>();
 
     let mut builder = Builder::default();
 
@@ -112,16 +116,18 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
             failed.push(Cell::new(i + 2, 3));
         }
 
-        builder.push_record([&solution.name, "#1", format_solution(&solution.solution_1), &format_test(passed_1) , &format_time(solution.time_1), &format_percentage(solution.time_1, total_time)]);
+        builder.push_record([&solution.name, "I", "", "", &format_time(solution.input_time), &format_percentage(solution.input_time, total_time)]);
+        builder.push_record(["", "#1", format_solution(&solution.solution_1), &format_test(passed_1) , &format_time(solution.time_1), &format_percentage(solution.time_1, total_time)]);
         builder.push_record(["", "#2", format_solution(&solution.solution_2), &format_test(passed_2), &format_time(solution.time_2), &format_percentage(solution.time_2, total_time)]);
-        builder.push_record(["", "", "", &format_test(passed), &format_time(solution.time_1 + solution.time_2), &format_percentage(solution.time_1 + solution.time_2, total_time)]);
+        builder.push_record(["", "", "", &format_test(passed), &format_time(solution.time_1 + solution.time_2 + solution.input_time), &format_percentage(solution.time_1 + solution.time_2 + solution.input_time, total_time)]);
         builder.push_record([""]);
 
-        row_colors.push((Rows::single(i), time_color(solution.time_1)));
-        row_colors.push((Rows::single(i + 1), time_color(solution.time_2)));
-        row_colors.push((Rows::single(i + 2), time_color(solution.time_1 + solution.time_2)));
+        row_colors.push((Rows::single(i), time_color(solution.input_time)));
+        row_colors.push((Rows::single(i + 1), time_color(solution.time_1)));
+        row_colors.push((Rows::single(i + 2), time_color(solution.time_2)));
+        row_colors.push((Rows::single(i + 3), time_color(solution.time_1 + solution.time_2 + solution.input_time)));
 
-        i += 4;
+        i += 5;
     }
 
     builder.push_record(["Total", "", "", &format_test(passed_all), &format_time(total_time), &format_percentage(total_time, total_time)]);
