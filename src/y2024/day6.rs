@@ -34,10 +34,7 @@ type DataCollection = (usize, Map, FxHashSet<usize>, FxHashSet<StealthDirection>
 pub struct Map {
     width: usize,
     height: usize,
-    obstacles_right: Vec<usize>,
-    obstacles_left: Vec<usize>,
-    obstacles_up: Vec<usize>,
-    obstacles_down: Vec<usize>,
+    obstacles: Vec<u32>,
 }
 
 /// Checks if moving in the specified direction will result in the guard leaving the map
@@ -49,11 +46,35 @@ fn will_move_out_of_map(map: &Map, position: usize, direction: isize) -> bool {
     (y_coordinate(position, map.width) == map.height - 1 && direction > 1) 
 }
 
+/// Gets the next obstacle to the left of the current location
+#[inline(always)]
+fn next_left_obstacle(map: &Map, position: usize) -> usize {
+    return (map.obstacles[position] >> 24) as usize 
+}
+
+/// Gets the next obstacle to the right of the current location
+#[inline(always)]
+fn next_right_obstacle(map: &Map, position: usize) -> usize {
+    return ((map.obstacles[position] >> 16) & 0xFF) as usize 
+}
+
+/// Gets the next obstacle below the current location
+#[inline(always)]
+fn next_down_obstacle(map: &Map, position: usize) -> usize {
+    return ((map.obstacles[position] >> 8) & 0xFF) as usize 
+}
+
+/// Gets the next obstacle above the current location
+#[inline(always)]
+fn next_up_obstacle(map: &Map, position: usize) -> usize {
+    return (map.obstacles[position] & 0xFF) as usize 
+}
+
 /// Checks if the specified position contains an obstacle. 
-/// This is indicated by the list having its own x coordinate as next obstacle
+/// This is indicated by the list having its own y coordinate as next obstacle
 #[inline]
 fn is_obstacle(map: &Map, point: usize) -> bool {
-    map.obstacles_left[point] == x_coordinate(point, map.width)
+    next_up_obstacle(map, point) as usize == y_coordinate(point, map.width)
 }
 
 /// Splits the x coordinate off the index
@@ -78,9 +99,9 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
     if direction == -1 {
         let obstacle_could_be_hit = start_y == obstacle_y && start_x > obstacle_x;
 
-        let next_x = map.obstacles_left[start];
+        let next_x = next_left_obstacle(map, start);
 
-        if next_x == usize::MAX {
+        if next_x == 0xFF {
             if obstacle_could_be_hit {
                 Some(obstacle + 1)
             } else {
@@ -94,7 +115,7 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
     } else if direction == 1 {
         let obstacle_could_be_hit = start_y == obstacle_y && start_x < obstacle_x;
 
-        let next_x = map.obstacles_right[start];
+        let next_x = next_right_obstacle(map, start);
 
         if next_x == 0 {
             if obstacle_could_be_hit {
@@ -110,9 +131,9 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
     } else if direction < -1 {
         let obstacle_could_be_hit = start_x == obstacle_x && start_y > obstacle_y;
 
-        let next_y = map.obstacles_down[start];
+        let next_y = next_down_obstacle(map, start);
 
-        if next_y == usize::MAX {
+        if next_y == 0xFF {
             if obstacle_could_be_hit {
                 Some(obstacle + map.width)
             } else {
@@ -126,7 +147,7 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
     } else if direction > 1 {
         let obstacle_could_be_hit = start_x == obstacle_x && start_y < obstacle_y;
 
-        let next_y = map.obstacles_up[start];
+        let next_y = next_up_obstacle(map, start);
 
         if next_y == 0 {
             if obstacle_could_be_hit {
@@ -170,45 +191,43 @@ fn get_input(file: &str) -> DataCollection {
     }
 
     // Stores the next obstacles coordinate on that axis for each direction
-    let mut obstacles_right = vec![0; width * height];
-    let mut obstacles_left = vec![usize::MAX; width * height];
-    let mut obstacles_up = vec![0; height * width];
-    let mut obstacles_down = vec![usize::MAX; height * width];
+    let mut obstacles: Vec<u32> = vec![0xFF00FF00; width * height];
 
     for (y, row) in obstacles_y.iter().enumerate() {
-        let mut last_right = 0;
-        for x in row {
-            for i in last_right..=*x {
-                obstacles_right[y * width + i] = *x;
-            }
-            last_right = x + 1;
-        }
-
         let mut last_left = width;
         for x in row.iter().rev() {
             for i in *x..last_left {
-                obstacles_left[y * width + i] = *x;
+                obstacles[y * width + i] = obstacles[y * width + i] & 0x00FFFFFF | (*x as u32) << 24;
             }
             last_left = *x;
+        }
+
+        let mut last_right = 0;
+        for x in row {
+            for i in last_right..=*x {
+                obstacles[y * width + i] |= (*x as u32) << 16;
+            }
+            last_right = x + 1;
         }
     }
 
     for (x, column) in obstacles_x.iter().enumerate() {
-        let mut last_up = 0;
-        for y in column {
-            for i in last_up..=*y {
-                obstacles_up[x + i * width] = *y;
-            }
-            last_up = y + 1;
-        }
 
         let mut last_down = height;
         for y in column.iter().rev() {
             for i in *y..last_down {
-                obstacles_down[x + i * width] = *y;
+                obstacles[x + i * width] = obstacles[x + i * width] & 0xFFFF00FF | (*y as u32) << 8;
             }
             last_down = *y;
         }
+
+        let mut last_up = 0;
+        for y in column {
+            for i in last_up..=*y {
+                obstacles[x + i * width] |= *y as u32;
+            }
+            last_up = y + 1;
+        }        
     }
 
     let output = (
@@ -216,10 +235,7 @@ fn get_input(file: &str) -> DataCollection {
         Map {
             width,
             height,
-            obstacles_right,
-            obstacles_left,
-            obstacles_down,
-            obstacles_up
+            obstacles
         }
     );
 
