@@ -1,16 +1,21 @@
 use std::fs;
 
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 use crate::solutions;
 
 solutions!{2024, 11}
 
-fn get_input(file: &str) -> Vec<u64> {
-    fs::read_to_string(file).expect("No file there").split_whitespace().map(|s| s.parse().unwrap()).collect()
+fn get_input(file: &str) -> FxHashMap<u64, usize> {
+    let input: Vec<u64> = fs::read_to_string(file).expect("No file there").split_whitespace().map(|s| s.parse().unwrap()).collect();
+
+    let mut stones = stones_to_map(&input);
+    mutate_n_times(&mut stones, 25);
+
+    stones
 }
 
-fn is_splittable(num: u64) -> (bool, u64, u64) {
+fn is_splittable(num: u64) -> Option<(u64, u64)> {
     let mut i = 0;
     let mut t = 1;
     let mut t_half = 1;
@@ -24,54 +29,65 @@ fn is_splittable(num: u64) -> (bool, u64, u64) {
     }
 
     if i & 1 == 1 {
-        return (false, num, 0);
+        return None;
     }
 
     let right = num % t_half;
     let left = (num - right) / t_half;
-    (true, left, right)
+    Some((left, right))
 }
 
-const CACHE_TRESHOLD: u8 = 4;
+enum Mutation {
+    One(u64),
+    Two(u64, u64)
+}
 
-fn mutations(num: u64, depth: u8, cache: &mut FxHashMap<(u64, u8), u64>) -> u64 {
-    if depth == 0 {
-        return 1;
-    }
-
+fn mutate(num: u64) -> Mutation {
     if num == 0 {
-        return mutations(1, depth - 1, cache);
+        Mutation::One(1)
+    } else if let Some((left, right)) = is_splittable(num) {
+        Mutation::Two(left, right)
+    } else {
+        Mutation::One(num * 2024)
     }
-
-    let (is, left, right) = is_splittable(num);
-
-    if is {
-        if depth > CACHE_TRESHOLD {
-            if let Some(value) = cache.get(&(num, depth)) {
-                return *value;
-            }
-        }
-
-        let value = mutations(left, depth - 1, cache) + mutations(right, depth - 1, cache);
-        if depth > CACHE_TRESHOLD {
-            cache.insert((num, depth), value);
-        }
-        return value;
-    }
-
-    mutations(num * 2024, depth - 1, cache)
 }
 
-fn solve_first(input: &[u64]) -> u64 {
-    let mut cache = FxHashMap::with_capacity_and_hasher(4096, FxBuildHasher);
-    input.iter()
-        .map(|num| mutations(*num, 25, &mut cache))
-        .sum()
+fn mutate_all(stones: &mut FxHashMap<u64, usize>) {
+    let last_stones: Vec<_> = stones.drain().collect();
+
+    for (stone, count) in last_stones {
+        match mutate(stone) {
+            Mutation::One(new_stone) => *stones.entry(new_stone).or_default() += count,
+            Mutation::Two(first_stone, second_stone) => {
+                *stones.entry(first_stone).or_default() += count;
+                *stones.entry(second_stone).or_default() += count;
+            },
+        }
+    }
 }
 
-fn solve_second(input: &[u64]) -> u64 {
-    let mut cache = FxHashMap::with_capacity_and_hasher(4096, FxBuildHasher);
-    input.iter()
-        .map(|num| mutations(*num, 75, &mut cache))
-        .sum()
+fn stones_to_map(stones: &[u64]) -> FxHashMap<u64, usize> {
+    let mut blink_stones: FxHashMap<u64, usize> = FxHashMap::default();
+
+    for stone in stones {
+        *blink_stones.entry(*stone).or_default() += 1;
+    }
+
+    blink_stones
+}
+
+fn mutate_n_times(stones: &mut FxHashMap<u64, usize>, n: usize) {
+    for _ in 0..n {
+        mutate_all(stones);
+    }
+}
+
+fn solve_first(input: &FxHashMap<u64, usize>) -> usize {
+    input.values().sum()
+}
+
+fn solve_second(input: &FxHashMap<u64, usize>) -> usize {
+    let mut stones = input.clone();
+    mutate_n_times(&mut stones, 50);
+    stones.values().sum()
 }
