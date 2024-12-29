@@ -49,32 +49,32 @@ fn will_move_out_of_map(map: &Map, position: usize, direction: isize) -> bool {
 /// Gets the next obstacle to the left of the current location
 #[inline(always)]
 fn next_left_obstacle(map: &Map, position: usize) -> usize {
-    return (map.obstacles[position] >> 24) as usize 
+    (map.obstacles[position] >> 24) as usize 
 }
 
 /// Gets the next obstacle to the right of the current location
 #[inline(always)]
 fn next_right_obstacle(map: &Map, position: usize) -> usize {
-    return ((map.obstacles[position] >> 16) & 0xFF) as usize 
+    ((map.obstacles[position] >> 16) & 0xFF) as usize 
 }
 
 /// Gets the next obstacle below the current location
 #[inline(always)]
 fn next_down_obstacle(map: &Map, position: usize) -> usize {
-    return ((map.obstacles[position] >> 8) & 0xFF) as usize 
+    ((map.obstacles[position] >> 8) & 0xFF) as usize 
 }
 
 /// Gets the next obstacle above the current location
 #[inline(always)]
 fn next_up_obstacle(map: &Map, position: usize) -> usize {
-    return (map.obstacles[position] & 0xFF) as usize 
+    (map.obstacles[position] & 0xFF) as usize 
 }
 
 /// Checks if the specified position contains an obstacle. 
 /// This is indicated by the list having its own y coordinate as next obstacle
 #[inline]
 fn is_obstacle(map: &Map, point: usize) -> bool {
-    next_up_obstacle(map, point) as usize == y_coordinate(point, map.width)
+    next_up_obstacle(map, point) == y_coordinate(point, map.width)
 }
 
 /// Splits the x coordinate off the index

@@ -102,7 +102,7 @@ fn solve_first(input: &(FxHashMap<char, Vec<Vector2>>, Vector2)) -> usize {
 
     stations
         .iter()
-        .filter(|station| in_bounds(&station, dimensions))
+        .filter(|station| in_bounds(station, dimensions))
         .count()
 }
 
