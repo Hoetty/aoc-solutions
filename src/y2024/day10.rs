@@ -1,121 +1,85 @@
 use std::{collections::VecDeque, fs};
 
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use crate::solutions;
 
 solutions!{2024, 10}
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
-struct Spot {
-    x: i16,
-    y: i16
-}
+fn get_input(file: &str) -> Vec<(usize, usize)> {
+    let mut trail_heads = Vec::with_capacity(64);
+    let mut map = Vec::with_capacity(1024);
 
-impl Spot {
-    pub fn new(x: i16, y: i16) -> Spot {
-        Spot { x, y }
-    }
-}
-
-fn get_input(file: &str) -> (Vec<Vec<u8>>, Vec<Spot>) {
-    let mut starting = Vec::new();
-    let mut map = Vec::new();
+    let mut width = 0;
+    let mut height = 0;
 
     for (y, line) in fs::read_to_string(file).expect("No file there").lines().enumerate() {
-        map.push(Vec::new());
-        for (x, c) in line.chars().enumerate() {
-            let level = (c as u8) - 48;
-            map[y].push(level);
+        width = line.len();
+        height += 1;
+        for (x, level) in line.chars().map(|character| character.to_digit(10).unwrap() as u8).enumerate() {
+            map.push(level);
 
             if level == 0 {
-                starting.push(Spot::new(x as i16, y as i16));
+                trail_heads.push(y * width + x);
             }
         }
     }
 
-    (map, starting)
+    get_trails(&map, &trail_heads, width, height)
 }
 
-fn solve_first(input: &(Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
-    let (map, starting) = input;
+/// Find all trails, where a trail is a path from 0 to 9 with one step increments
+/// trail_heads contains all 0 starting positions
+fn get_trails(map: &Vec<u8>, trail_heads: &Vec<usize>, width: usize, height: usize) -> Vec<(usize, usize)> {
+    let mut trails = Vec::with_capacity(1024);
+    // A queue to hold all positions we need to evaluate
+    let mut queue = VecDeque::new();
 
-    let width = map[0].len();
-    let height = map.len();
-    let mut sum = 0;
-
-    for base in starting {
-        let mut heads: FxHashSet<Spot> = FxHashSet::with_capacity_and_hasher(10, FxBuildHasher);
-        let mut queue = VecDeque::from([*base]);
+    for tail_head in trail_heads {
+        queue.push_back(*tail_head);
 
         while !queue.is_empty() {
             let current = queue.pop_front().unwrap();
-            let value = map[current.y as usize][current.x as usize];
+            let value = map[current];
+            let next_value = value + 1;
 
+            // If the current value is a 9, we hit an end, add it to the list and continue
             if value == 9 {
-                heads.insert(current);
+                trails.push((*tail_head, current));
                 continue;
             }
 
-            if (current.x as usize) < width - 1 && map[current.y as usize][current.x as usize + 1] == value + 1 {
-                queue.push_back(Spot::new(current.x + 1, current.y));
+            if current % width < width - 1 && map[current + 1] == next_value {
+                queue.push_back(current + 1);
             }
 
-            if (current.x as usize) > 0 && map[current.y as usize][current.x as usize - 1] == value + 1 {
-                queue.push_back(Spot::new(current.x - 1, current.y));
+            if current % width > 0 && map[current - 1] == next_value {
+                queue.push_back(current - 1);
             }
 
-            if (current.y as usize) < height - 1 && map[current.y as usize + 1][current.x as usize] == value + 1 {
-                queue.push_back(Spot::new(current.x, current.y + 1));
+            if current / width < height - 1 && map[current + width] == next_value {
+                queue.push_back(current + width);
             }
 
-            if (current.y as usize) > 0 && map[current.y as usize - 1][current.x as usize] == value + 1 {
-                queue.push_back(Spot::new(current.x, current.y - 1));
+            if current / width > 0 && map[current - width] == next_value {
+                queue.push_back(current - width);
             }
         }
-
-        sum += heads.len();
     }
 
-    sum as u64
+    trails
 }
 
-fn solve_second(input: &(Vec<Vec<u8>>, Vec<Spot>)) -> u64 {
-    let (map, starting) = input;
+/// ### Unique Scoring
+/// 
+/// Calculate the sum of all trail heads' scores - the number of unique trails 
+fn solve_first(input: &Vec<(usize, usize)>) -> usize {
+    FxHashSet::from_iter(input.iter()).len()
+}
 
-    let width = map[0].len();
-    let height = map.len();
-    let mut sum = 0;
-
-    for base in starting {
-        let mut queue = VecDeque::from([*base]);
-
-        while !queue.is_empty() {
-            let current = queue.pop_front().unwrap();
-            let value = map[current.y as usize][current.x as usize];
-
-            if value == 9 {
-                sum += 1;
-                continue;
-            }
-
-            if (current.x as usize) < width - 1 && map[current.y as usize][current.x as usize + 1] == value + 1 {
-                queue.push_back(Spot::new(current.x + 1, current.y));
-            }
-
-            if (current.x as usize) > 0 && map[current.y as usize][current.x as usize - 1] == value + 1 {
-                queue.push_back(Spot::new(current.x - 1, current.y));
-            }
-
-            if (current.y as usize) < height - 1 && map[current.y as usize + 1][current.x as usize] == value + 1 {
-                queue.push_back(Spot::new(current.x, current.y + 1));
-            }
-
-            if (current.y as usize) > 0 && map[current.y as usize - 1][current.x as usize] == value + 1 {
-                queue.push_back(Spot::new(current.x, current.y - 1));
-            }
-        }
-    }
-
-    sum as u64
+/// ### Duplicate Scoring
+/// 
+/// Calculate the sum of all trail heads' scores - the number of trails
+fn solve_second(input: &Vec<(usize, usize)>) -> usize {
+    input.len()
 }
