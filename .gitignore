@@ -1,8 +1,5 @@
-.vscode
-target
-output.txt
-perf.*
-flamegraph.svg
-test.csv
-dump.txt
-test.ipynb
+*
+!src
+!visualizations
+!Cargo.lock
+!Cargo.toml
