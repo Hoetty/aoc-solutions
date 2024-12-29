@@ -1,5 +1,7 @@
 *
 !src
+!src/**/*
 !visualizations
+!visualizations/**/*
 !Cargo.lock
 !Cargo.toml
