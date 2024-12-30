@@ -5,6 +5,7 @@ mod y2015;
 mod y2024;
 
 pub mod formatting;
+pub mod util;
 
 fn main() {
     let years = [
