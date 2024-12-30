@@ -2,7 +2,7 @@ use std::{fs, hash::Hash};
 
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use crate::solutions;
+use crate::{solutions, util::flatgrid::FlatGrid};
 
 solutions!{2024, 6}
 
@@ -28,73 +28,61 @@ impl Eq for StealthDirection {
 
 }
 
-type DataCollection = (usize, Map, FxHashSet<usize>, FxHashSet<StealthDirection>);
 
-#[derive(Clone)]
-pub struct Map {
-    width: usize,
-    height: usize,
-    obstacles: Vec<u32>,
-}
+const WIDTH: usize = 130;
+const HEIGHT: usize = 130;
+
+type Room = FlatGrid<u32, WIDTH, HEIGHT>;
+
+type DataCollection = (usize, Room, FxHashSet<usize>, FxHashSet<StealthDirection>);
 
 /// Checks if moving in the specified direction will result in the guard leaving the map
 #[inline]
-fn will_move_out_of_map(map: &Map, position: usize, direction: isize) -> bool {
-    (x_coordinate(position, map.width) == 0 && direction == -1) ||
-    (x_coordinate(position, map.width) == map.width - 1 && direction == 1) ||
-    (y_coordinate(position, map.width) == 0 && direction < -1) ||
-    (y_coordinate(position, map.width) == map.height - 1 && direction > 1) 
+fn will_move_out_of_map(position: usize, direction: isize) -> bool {
+    if direction.abs() > 1 {
+        Room::will_vertical_move_cross_border(position, direction / Room::width() as isize)
+    } else {
+        Room::will_horizontal_move_cross_border(position, direction)
+    }
 }
 
 /// Gets the next obstacle to the left of the current location
 #[inline(always)]
-fn next_left_obstacle(map: &Map, position: usize) -> usize {
-    (map.obstacles[position] >> 24) as usize 
+fn next_left_obstacle(map: &Room, position: usize) -> usize {
+    (map[position] >> 24) as usize 
 }
 
 /// Gets the next obstacle to the right of the current location
 #[inline(always)]
-fn next_right_obstacle(map: &Map, position: usize) -> usize {
-    ((map.obstacles[position] >> 16) & 0xFF) as usize 
+fn next_right_obstacle(map: &Room, position: usize) -> usize {
+    ((map[position] >> 16) & 0xFF) as usize 
 }
 
 /// Gets the next obstacle below the current location
 #[inline(always)]
-fn next_down_obstacle(map: &Map, position: usize) -> usize {
-    ((map.obstacles[position] >> 8) & 0xFF) as usize 
+fn next_down_obstacle(map: &Room, position: usize) -> usize {
+    ((map[position] >> 8) & 0xFF) as usize 
 }
 
 /// Gets the next obstacle above the current location
 #[inline(always)]
-fn next_up_obstacle(map: &Map, position: usize) -> usize {
-    (map.obstacles[position] & 0xFF) as usize 
+fn next_up_obstacle(map: &Room, position: usize) -> usize {
+    (map[position] & 0xFF) as usize 
 }
 
 /// Checks if the specified position contains an obstacle. 
 /// This is indicated by the list having its own y coordinate as next obstacle
 #[inline]
-fn is_obstacle(map: &Map, point: usize) -> bool {
-    next_up_obstacle(map, point) == y_coordinate(point, map.width)
-}
-
-/// Splits the x coordinate off the index
-#[inline(always)]
-fn x_coordinate(position: usize, width: usize) -> usize {
-    position - y_coordinate(position, width) * width
-}
-
-/// Splits the y coordinate off the index
-#[inline(always)]
-fn y_coordinate(position: usize, width: usize) -> usize {
-    position / width
+fn is_obstacle(map: &Room, point: usize) -> bool {
+    next_up_obstacle(map, point) == Room::y_coordinate(point)
 }
 
 /// Calculates the next position in front of an obstacle, accepting another obstacle not currently on the map
-fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> Option<usize> {
-    let start_x = x_coordinate(start, map.width);
-    let start_y = y_coordinate(start, map.width);
-    let obstacle_x = x_coordinate(obstacle, map.width);
-    let obstacle_y = y_coordinate(obstacle, map.width);
+fn next_position(map: &Room, start: usize, direction: isize, obstacle: usize) -> Option<usize> {
+    let start_x = Room::x_coordinate(start);
+    let start_y = Room::y_coordinate(start);
+    let obstacle_x = Room::x_coordinate(obstacle);
+    let obstacle_y = Room::y_coordinate(obstacle);
 
     if direction == -1 {
         let obstacle_could_be_hit = start_y == obstacle_y && start_x > obstacle_x;
@@ -103,14 +91,14 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
 
         if next_x == 0xFF {
             if obstacle_could_be_hit {
-                Some(obstacle + 1)
+                Some(Room::moved_horizontally(obstacle, 1))
             } else {
                 None
             }
         } else if !obstacle_could_be_hit || next_x > obstacle_x {
             Some(start - start_x + next_x + 1)
         } else {
-            Some(obstacle + 1)
+            Some(Room::moved_horizontally(obstacle, 1))
         }
     } else if direction == 1 {
         let obstacle_could_be_hit = start_y == obstacle_y && start_x < obstacle_x;
@@ -119,14 +107,14 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
 
         if next_x == 0 {
             if obstacle_could_be_hit {
-                Some(obstacle - 1)
+                Some(Room::moved_horizontally(obstacle, -1))
             } else {
                 None
             }
         } else if !obstacle_could_be_hit || next_x < obstacle_x {
             Some(start - start_x + next_x - 1)
         } else {
-            Some(obstacle - 1)
+            Some(Room::moved_horizontally(obstacle, -1))
         }
     } else if direction < -1 {
         let obstacle_could_be_hit = start_x == obstacle_x && start_y > obstacle_y;
@@ -135,14 +123,14 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
 
         if next_y == 0xFF {
             if obstacle_could_be_hit {
-                Some(obstacle + map.width)
+                Some(Room::moved_vertically(obstacle, 1))
             } else {
                 None
             }
         } else if !obstacle_could_be_hit || next_y > obstacle_y {
-            Some(start_x + (next_y + 1) * map.width)
+            Some(start_x + (next_y + 1) * Room::width())
         } else {
-            Some(obstacle + map.width)
+            Some(Room::moved_vertically(obstacle, 1))
         }
     } else if direction > 1 {
         let obstacle_could_be_hit = start_x == obstacle_x && start_y < obstacle_y;
@@ -151,53 +139,50 @@ fn next_position(map: &Map, start: usize, direction: isize, obstacle: usize) -> 
 
         if next_y == 0 {
             if obstacle_could_be_hit {
-                Some(obstacle - map.width)
+                Some(Room::moved_vertically(obstacle, -1))
             } else {
                 None
             }
         } else if !obstacle_could_be_hit || next_y < obstacle_y {
-            Some(start_x + (next_y - 1) * map.width)
+            Some(start_x + (next_y - 1) * Room::width())
         } else {
-            Some(obstacle - map.width)
+            Some(Room::moved_vertically(obstacle, -1))
         }
     } else {
         panic!()
     }
 }
 
-
 fn get_input(file: &str) -> DataCollection {
     let file = fs::read_to_string(file).expect("No file there");
     let lines: Vec<&str> = file.lines().collect();
 
-    let width = lines[0].len();
-    let height = lines.len();
-
     let mut starting: usize = 0;
 
+    
     // Collects all obstacles per axis
-    let mut obstacles_x = vec![vec![]; width];
-    let mut obstacles_y = vec![vec![]; height];
-
+    let mut obstacles_x = vec![vec![]; Room::width()];
+    let mut obstacles_y = vec![vec![]; Room::height()];
+    
     for (y, line) in lines.iter().enumerate() {
         for (x, char) in line.chars().enumerate() {
             if char == '#' {
                 obstacles_x[x].push(y);
                 obstacles_y[y].push(x);
             } else if char == '^' {
-                starting = x + y * width;
+                starting = Room::to_index(x, y);
             }
         }
     }
-
+    
     // Stores the next obstacles coordinate on that axis for each direction
-    let mut obstacles: Vec<u32> = vec![0xFF00FF00; width * height];
+    let mut obstacles: Room = vec![0xFF00FF00; WIDTH * HEIGHT].into();
 
     for (y, row) in obstacles_y.iter().enumerate() {
-        let mut last_left = width;
+        let mut last_left = Room::width();
         for x in row.iter().rev() {
             for i in *x..last_left {
-                obstacles[y * width + i] = obstacles[y * width + i] & 0x00FFFFFF | (*x as u32) << 24;
+                obstacles[Room::to_index(i, y)] = obstacles[Room::to_index(i, y)] & 0x00FFFFFF | (*x as u32) << 24;
             }
             last_left = *x;
         }
@@ -205,7 +190,7 @@ fn get_input(file: &str) -> DataCollection {
         let mut last_right = 0;
         for x in row {
             for i in last_right..=*x {
-                obstacles[y * width + i] |= (*x as u32) << 16;
+                obstacles[Room::to_index(i, y)] |= (*x as u32) << 16;
             }
             last_right = x + 1;
         }
@@ -213,10 +198,10 @@ fn get_input(file: &str) -> DataCollection {
 
     for (x, column) in obstacles_x.iter().enumerate() {
 
-        let mut last_down = height;
+        let mut last_down = Room::height();
         for y in column.iter().rev() {
             for i in *y..last_down {
-                obstacles[x + i * width] = obstacles[x + i * width] & 0xFFFF00FF | (*y as u32) << 8;
+                obstacles[Room::to_index(x, i)] = obstacles[Room::to_index(x, i)] & 0xFFFF00FF | (*y as u32) << 8;
             }
             last_down = *y;
         }
@@ -224,7 +209,7 @@ fn get_input(file: &str) -> DataCollection {
         let mut last_up = 0;
         for y in column {
             for i in last_up..=*y {
-                obstacles[x + i * width] |= *y as u32;
+                obstacles[Room::to_index(x, i)] |= *y as u32;
             }
             last_up = y + 1;
         }        
@@ -232,11 +217,7 @@ fn get_input(file: &str) -> DataCollection {
 
     let output = (
         starting,
-        Map {
-            width,
-            height,
-            obstacles
-        }
+        obstacles
     );
 
     // Precalculate part 1 to reuse it in part 2
@@ -254,11 +235,11 @@ fn get_input(file: &str) -> DataCollection {
 
 /// Rotates the given direction 90° right
 #[inline(always)]
-fn rotate_right(map: &Map, direction: isize) -> isize {
+fn rotate_right(direction: isize) -> isize {
     if direction == 1 {
-        map.width as isize
+        Room::width() as isize
     } else if direction == -1 {
-        -(map.width as isize)
+        -(Room::width() as isize)
     } else if direction > 1 {
         -1
     } else if direction < -1 {
@@ -270,26 +251,26 @@ fn rotate_right(map: &Map, direction: isize) -> isize {
 
 /// Walks the guard over the map, if the guard hits an obstacle, they turn right
 /// Once they exit the map, the number of unique visited tiles is counted
-fn path_and_directions(input: &(usize, Map)) -> (FxHashSet<usize>, FxHashSet<StealthDirection>) {
+fn path_and_directions(input: &(usize, Room)) -> (FxHashSet<usize>, FxHashSet<StealthDirection>) {
     let mut path: FxHashSet<usize> = FxHashSet::with_capacity_and_hasher(5000, FxBuildHasher);
     let mut directions: FxHashSet<StealthDirection> = FxHashSet::with_capacity_and_hasher(5000, FxBuildHasher);
     let (starting_position, map) = input;
 
     let mut position = *starting_position;
-    let mut direction = -(map.width as isize);
+    let mut direction = -(Room::width() as isize);
 
     loop {
         path.insert(position);
         directions.insert(StealthDirection(position, direction));
 
-        if will_move_out_of_map(map, position, direction) {
+        if will_move_out_of_map(position, direction) {
             break;
         }
 
         let next = (position as isize + direction) as usize;
         
         if is_obstacle(map, next) {
-            direction = rotate_right(map, direction);
+            direction = rotate_right(direction);
         } else {
             position = next;
         }
@@ -344,7 +325,7 @@ fn solve_second(input: &DataCollection) -> usize {
             }
 
             turns += 1;
-            trace_direction = rotate_right(map, trace_direction);
+            trace_direction = rotate_right(trace_direction);
         }
     }
 

@@ -44,128 +44,128 @@ impl <T, const W: usize, const H: usize> FlatGrid<T, W, H> {
 
     /// Gets the x coordiante of an index
     #[inline(always)]
-    pub fn x_coordinate(&self, index: usize) -> usize {
+    pub const fn x_coordinate(index: usize) -> usize {
         index % W
     }
 
     /// Gets the y coordinate of an index
     #[inline(always)]
-    pub fn y_coordinate(&self, index: usize) -> usize {
+    pub const fn y_coordinate(index: usize) -> usize {
         index / W
     }
 
     /// Splits the index into its x and y coordinates
     #[inline(always)]
-    pub fn to_coordinates(&self, index: usize) -> (usize, usize) {
-        (self.x_coordinate(index), self.y_coordinate(index))
+    pub const fn to_coordinates(index: usize) -> (usize, usize) {
+        (Self::x_coordinate(index), Self::y_coordinate(index))
     }
 
     /// Transforms x and y coordinates into an index
     #[inline(always)]
-    pub fn to_index(&self, coords: (usize, usize)) -> usize {
-        coords.0 + coords.1 * W
+    pub const fn to_index(x: usize, y: usize) -> usize {
+        x + y * W
     }
 
     /// Calculates the distance to the left edge from the index
     #[inline(always)]
-    pub fn distance_to_left_edge(&self, index: usize) -> usize {
-        self.x_coordinate(index)
+    pub const fn distance_to_left_edge(index: usize) -> usize {
+        Self::x_coordinate(index)
     }
 
     /// Calculates the distance to the bottom edge from the index
     #[inline(always)]
-    pub fn distance_to_bottom_edge(&self, index: usize) -> usize {
-        self.y_coordinate(index)
+    pub const fn distance_to_bottom_edge(index: usize) -> usize {
+        Self::y_coordinate(index)
     }
 
     /// Calculates the distance to the right edge from the index
     #[inline(always)]
-    pub fn distance_to_right_edge(&self, index: usize) -> usize {
-        W - self.x_coordinate(index) - 1
+    pub const fn distance_to_right_edge(index: usize) -> usize {
+        W - Self::x_coordinate(index) - 1
     }
 
     /// Calculates the distance to the top edge from the index
     #[inline(always)]
-    pub fn distance_to_top_edge(&self, index: usize) -> usize {
-        H - self.y_coordinate(index) - 1
+    pub const fn distance_to_top_edge(index: usize) -> usize {
+        H - Self::y_coordinate(index) - 1
     }
 
     /// Checks if a horizontal move starting from the index will cross a border
-    pub fn will_horizontal_move_cross_border(&self, index: usize, direction: isize) -> bool {
+    pub const fn will_horizontal_move_cross_border(index: usize, direction: isize) -> bool {
         if direction < 0 {
-            direction.unsigned_abs() > self.distance_to_left_edge(index)
+            direction.unsigned_abs() > Self::distance_to_left_edge(index)
         } else {
-            direction as usize > self.distance_to_right_edge(index)
+            direction as usize > Self::distance_to_right_edge(index)
         }
     }
 
     /// Checks if a vertical move starting from the index will cross a border
-    pub fn will_vertical_move_cross_border(&self, index: usize, direction: isize) -> bool {
+    pub const fn will_vertical_move_cross_border(index: usize, direction: isize) -> bool {
         if direction < 0 {
-            direction.unsigned_abs() > self.distance_to_bottom_edge(index)
+            direction.unsigned_abs() > Self::distance_to_bottom_edge(index)
         } else {
-            direction as usize > self.distance_to_top_edge(index)
+            direction as usize > Self::distance_to_top_edge(index)
         }
     }
 
     /// Returns the grids width
     #[inline(always)]
-    pub fn width(&self) -> usize {
+    pub const fn width() -> usize {
         W
     }
 
     /// Returns the grids height
     #[inline(always)]
-    pub fn height(&self) -> usize {
+    pub const fn height() -> usize {
         H
     }
 
     /// Returns the grids area, which should be equal to its length
     #[inline(always)]
-    pub fn area(&self) -> usize {
+    pub const fn area() -> usize {
         W * H
     }
 
     /// Gets the index movement for a horizontal movement
     #[inline(always)]
-    pub fn horizontal_movement(&self, amount: isize) -> isize {
+    pub const fn horizontal_movement(amount: isize) -> isize {
         amount
     }
 
     /// Gets the index movement for a vertical movement
     #[inline(always)]
-    pub fn vertical_movement(&self, amount: isize) -> isize {
+    pub const fn vertical_movement(amount: isize) -> isize {
         amount * W as isize
     }
 
     /// Gets the index movement for a combined horizontal and vertical movement
     #[inline(always)]
-    pub fn movement(&self, horizontal: isize, vertical: isize) -> isize {
-        self.vertical_movement(vertical) + self.horizontal_movement(horizontal)
+    pub const fn movement(horizontal: isize, vertical: isize) -> isize {
+        Self::vertical_movement(vertical) + Self::horizontal_movement(horizontal)
     }
 
     /// Moves an index horizontally
     #[inline(always)]
-    pub fn moved_horizontally(&self, index: usize, amount: isize) -> usize {
-        (index as isize + self.horizontal_movement(amount)) as usize
+    pub const fn moved_horizontally(index: usize, amount: isize) -> usize {
+        (index as isize + Self::horizontal_movement(amount)) as usize
     }
 
     /// Moves an index vertically
     #[inline(always)]
-    pub fn moved_vertically(&self, index: usize, amount: isize) -> usize {
-        (index as isize + self.vertical_movement(amount)) as usize
+    pub const fn moved_vertically(index: usize, amount: isize) -> usize {
+        (index as isize + Self::vertical_movement(amount)) as usize
     }
 
     /// Moves an index both horizontally and vertically
     #[inline(always)]
-    pub fn moved(&self, index: usize, horizontal: isize, vertical: isize) -> usize {
-        (index as isize + self.movement(horizontal, vertical)) as usize
+    pub const fn moved(index: usize, horizontal: isize, vertical: isize) -> usize {
+        (index as isize + Self::movement(horizontal, vertical)) as usize
     }
 
     /// Provices an iterator over the entire grids indices
     #[inline(always)]
-    pub fn indices(&self) -> Range<usize> {
-        0..self.area()
+    pub const fn indices() -> Range<usize> {
+        0..Self::area()
     }
 }
 
