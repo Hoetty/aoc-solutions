@@ -1,45 +1,56 @@
-use std::{fs::{self, OpenOptions}, io::Write};
+use std::fs;
 
 use crate::solutions;
 
 solutions!{2024, 14}
 
-const DIMENSION: (i64, i64) = (101, 103);
+const WIDTH: usize = 101;
+const HEIGHT: usize = 103;
+
+const MIDDLE_X: usize = (WIDTH + 1) / 2 - 1;
+const MIDDLE_Y: usize = (HEIGHT + 1) / 2 - 1;
+
 const TREE_THRESHOLD: f64 = 700.0;
 
+/// A robot has a position and a velocity vector
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-struct Robot((i64, i64), (i64, i64));
+struct Robot((usize, usize), (isize, isize));
+
+// The map stores all the robots
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 struct Map {
     robots: Vec<Robot>,
-    dimension: (i64, i64),
 }
 
 impl Map {
-    
-    fn step(&mut self, amount: i64) {
+    /// Update the robots positions using their velocity
+    /// If they move out of bounds they wrap around
+    fn step<const N: isize>(&mut self) {
         for robot in &mut self.robots {
-            robot.0 = ((robot.0.0 + robot.1.0 * amount).rem_euclid(self.dimension.0), (robot.0.1 + robot.1.1 * amount).rem_euclid(self.dimension.1));
+            robot.0 = (
+                (robot.0.0 as isize + robot.1.0 * N).rem_euclid(WIDTH as isize) as usize, 
+                (robot.0.1 as isize + robot.1.1 * N).rem_euclid(HEIGHT as isize) as usize
+            );
         }
     }
 
+    /// Calculates the safety score
+    /// The score is the product of the number of robots in each quadrant
+    /// The robots in the lines in the middle on any axis are ignored
     fn calculate_safety_score(&self) -> u64 {
         let mut tl = 0;
         let mut tr = 0;
         let mut bl = 0;
         let mut br = 0;
 
-        let middle_x = (self.dimension.0 + 1) / 2 - 1;
-        let middle_y = (self.dimension.1 + 1) / 2 - 1;
-
         for robot in self.robots.iter() {
-            if robot.0.0 < middle_x && robot.0.1 < middle_y {
+            if robot.0.0 < MIDDLE_X && robot.0.1 < MIDDLE_Y {
                 tl += 1;
-            } else if robot.0.0 > middle_x && robot.0.1 < middle_y {
+            } else if robot.0.0 > MIDDLE_X && robot.0.1 < MIDDLE_Y {
                 tr += 1;
-            } else if robot.0.0 < middle_x && robot.0.1 > middle_y {
+            } else if robot.0.0 < MIDDLE_X && robot.0.1 > MIDDLE_Y {
                 bl += 1;
-            } else if robot.0.0 > middle_x && robot.0.1 > middle_y {
+            } else if robot.0.0 > MIDDLE_X && robot.0.1 > MIDDLE_Y {
                 br += 1;
             }
         }
@@ -47,6 +58,7 @@ impl Map {
         tl * tr * bl * br
     }
 
+    /// Calculates the mean value of all the robots positions
     fn mu(&self) -> (f64, f64) {
         let mut x: u64 = 0;
         let mut y: u64 = 0;
@@ -60,9 +72,10 @@ impl Map {
         (x as f64 / count, y as f64 / count)
     }
 
-    fn v(&self) -> (f64, f64) {
-        let mut vx = 0.0;
-        let mut vy = 0.0;
+    /// Calculates the variance of the robots positions in both x and y direction
+    fn variance(&self) -> (f64, f64) {
+        let mut variance_x = 0.0;
+        let mut variance_y = 0.0;
         let mu = self.mu();
 
         let count = self.robots.len() as f64;
@@ -70,60 +83,44 @@ impl Map {
         for robot in &self.robots {
             let diff_x = robot.0.0 as f64 - mu.0;
             let diff_y = robot.0.1 as f64 - mu.1;
-            vx += diff_x * diff_x;
-            vy += diff_y * diff_y;
+            variance_x += diff_x * diff_x;
+            variance_y += diff_y * diff_y;
         }
 
-        (vx / count, vy / count)
-    }
-
-    #[allow(unused)]
-    fn dump(&self) {
-        let mut grid: Vec<Vec<u8>> = vec![vec![0; self.dimension.1 as usize]; self.dimension.0 as usize];
-
-        for robot in &self.robots {
-            grid[robot.0.0 as usize][robot.0.1 as usize] += 1;
-        }
-
-        fs::remove_file("dump.txt").unwrap();
-
-        let mut file = OpenOptions::new().create(true).append(true).open("dump.txt").unwrap();
-
-        for y in 0..self.dimension.1 {
-            for x in 0..self.dimension.0 {
-                write!(file, "{}", grid[x as usize][y as usize]).unwrap();
-            }
-            writeln!(file).unwrap();
-        }
+        (variance_x / count, variance_y / count)
     }
 }
 
 fn get_input(file: &str) -> Map {
     Map {
         robots: fs::read_to_string(file).expect("No file there").lines().map(|l| {
-            let l = l.replace("p=", "").replace("v=", "");
-            let (position, velocity) = l.split_once(" ").unwrap();
+            let (position, velocity) = l[2..].split_once(" v=").unwrap();
 
             let (px, py) = position.split_once(",").unwrap();
             let (vx, vy) = velocity.split_once(",").unwrap();
 
             Robot((px.parse().unwrap(), py.parse().unwrap()), (vx.parse().unwrap(), vy.parse().unwrap()))
-        }).collect(),
-        dimension: DIMENSION
+        }).collect()
     }
 }
 
+/// ### Safety Score
+/// 
+/// Calculates the safety score after 100 steps
 fn solve_first(input: &Map) -> u64 {
     let mut input = input.clone();
-    input.step(100);
+    input.step::<100>();
 
     input.calculate_safety_score()
 }
 
-// The drones have repeating cycles of low variance with a frequency equal to the length of the dimension:
-// In x direction -> width
-// In y direction -> height
-// We find both first spots and then calculate when the two frequencies will meet. Thats the christmas tree
+/// ### Drone Christmas Tree
+/// 
+/// The drones have repeating cycles of low variance with a frequency equal to the length of the dimension:
+/// In x direction -> width
+/// In y direction -> height
+/// We find both first spots and then calculate when the two frequencies will meet,
+/// this gives us the location of the christmas tree
 fn solve_second(input: &Map) -> u64 {
     let mut input = input.clone();
     let mut i: u64 = 0;
@@ -132,47 +129,31 @@ fn solve_second(input: &Map) -> u64 {
     let mut y = 0;
 
     loop {
-        let v = input.v();
-        if x == 0 && v.0 < TREE_THRESHOLD {
+        let (variance_x, variance_y) = input.variance();
+        if x == 0 && variance_x < TREE_THRESHOLD {
             x = i;
         }
 
-        if y == 0 && v.1 < TREE_THRESHOLD {
+        if y == 0 && variance_y < TREE_THRESHOLD {
             y = i;
         }
 
         if x > 0 && y > 0 {
-            let (width, height) = input.dimension;
-
-            if width < height {
-                if x < y {
-                    x += width as u64;
-                }
-
-                let mut diff = x - y;
-
-                if diff & 1 == 1 {
-                    diff += width as u64;
-                }
-
-                return y + diff / 2 * height as u64;
-            } else {
-                if x > y {
-                    y += height as u64;
-                }
-
-                let mut diff = y - x;
-
-                if diff & 1 == 1 {
-                    diff += height as u64;
-                }
-
-                return x + diff / 2 * width as u64;
+            if x < y {
+                x += WIDTH as u64;
             }
+
+            let mut diff = x - y;
+
+            if diff & 1 == 1 {
+                diff += WIDTH as u64;
+            }
+
+            return y + diff / 2 * HEIGHT as u64;
         }
 
         i += 1;
 
-        input.step(1);
+        input.step::<1>();
     }
 }
