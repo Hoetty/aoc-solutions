@@ -30,7 +30,7 @@ fn get_input(file: &str) -> Vec<(usize, usize)> {
 
 /// Find all trails, where a trail is a path from 0 to 9 with one step increments
 /// trail_heads contains all 0 starting positions
-fn get_trails(map: &Vec<u8>, trail_heads: &Vec<usize>, width: usize, height: usize) -> Vec<(usize, usize)> {
+fn get_trails(map: &[u8], trail_heads: &Vec<usize>, width: usize, height: usize) -> Vec<(usize, usize)> {
     let mut trails = Vec::with_capacity(1024);
     // A queue to hold all positions we need to evaluate
     let mut queue = VecDeque::new();
@@ -73,13 +73,13 @@ fn get_trails(map: &Vec<u8>, trail_heads: &Vec<usize>, width: usize, height: usi
 /// ### Unique Scoring
 /// 
 /// Calculate the sum of all trail heads' scores - the number of unique trails 
-fn solve_first(input: &Vec<(usize, usize)>) -> usize {
+fn solve_first(input: &[(usize, usize)]) -> usize {
     FxHashSet::from_iter(input.iter()).len()
 }
 
 /// ### Duplicate Scoring
 /// 
 /// Calculate the sum of all trail heads' scores - the number of trails
-fn solve_second(input: &Vec<(usize, usize)>) -> usize {
+fn solve_second(input: &[(usize, usize)]) -> usize {
     input.len()
 }
