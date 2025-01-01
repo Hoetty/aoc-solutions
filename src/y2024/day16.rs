@@ -1,74 +1,91 @@
-use std::{collections::HashSet, fs::{self}, rc::Rc};
+use std::{cmp::Ordering, collections::{HashSet, VecDeque}, fs::{self}, hash::Hash, io::stdin, rc::Rc};
 
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use crate::solutions;
+use crate::{solutions, util::flatgrid::FlatGrid};
 
 solutions!{2024, 16}
 
-#[derive(Clone)]
-struct Maze {
-    tiles: Vec<bool>,
-    start: usize,
-    end: usize,
-    width: usize
-}
+type Maze = FlatGrid<u8, 141, 141>;
+type LastPoints = FlatGrid<StateSave, 141, 141>;
 
-fn get_input(file: &str) -> Maze {
+const WALL_MASK: u8 = 1;
+
+fn get_input(file: &str) -> (Maze, usize, usize) {
     let file = fs::read_to_string(file).expect("No file there");
     
-    let mut tiles: Vec<bool> = Vec::new();
+    let mut maze = Maze::new();
     let mut start = 0;
     let mut end = 0;
-    let mut width = 0;
 
     for (y, line) in file.lines().enumerate() {
-        width = line.len();
         for (x, c) in line.chars().enumerate() {
-            tiles.push(c == '#');
+            maze.push((c == '#') as u8);
 
             if c == 'S' {
-                start = y * width + x;
+                start = Maze::to_index(x, y);
             } else if c == 'E' {
-                end = y * width + x;
+                end = Maze::to_index(x, y);
             }
         }
     }
 
-    Maze {
-        tiles,
-        start,
-        end,
-        width
-    }
+    (maze, start, end)
 }
 
 #[inline(always)]
-fn right(direction: isize, width: usize) -> isize {
+fn right(direction: isize) -> isize {
     match direction {
-        1 => width as isize,
-        _ if direction == width as isize => -1,
-        -1 => -(width as isize),
-        _ if direction == -(width as isize) => 1,
+        1 => Maze::width() as isize,
+        _ if direction == Maze::width() as isize => -1,
+        -1 => -(Maze::width() as isize),
+        _ if direction == -(Maze::width() as isize) => 1,
         dir => panic!("Invalid direction {dir}")
     }
 }
 
 #[inline(always)]
-fn left(direction: isize, width: usize) -> isize {
-    -right(direction, width)
+fn direction_index(direction: isize) -> usize {
+    match direction {
+        1 => 1,
+        _ if direction == Maze::width() as isize => 2,
+        -1 => 3,
+        _ if direction == -(Maze::width() as isize) => 4,
+        dir => panic!("Invalid direction {dir}")
+    }
+}
+
+
+#[inline(always)]
+fn left(direction: isize) -> isize {
+    -right(direction)
 }
 
 // Position, Direction, Length
-type State = (usize, isize, usize);
+#[derive(Eq, Debug, Clone, Copy)]
+struct State(usize, isize, usize);
 
-fn solve_first(input: &Maze) -> usize {
-    let mut visited: FxHashSet<(usize, isize)> = FxHashSet::default();
-    let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::default();
+impl PartialEq for State {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0 && self.1 == other.1
+    }
+}
 
-    let mut current_round: FxHashSet<State> = FxHashSet::default();
-    let mut next_round: FxHashSet<State> = FxHashSet::default();
-    next_round.insert((input.start, 1, 0));
+impl Hash for State {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+        self.1.hash(state);
+    }
+}
+
+fn solve_first(input: &(Maze, usize, usize)) -> usize {
+    let (maze, start, end) = input;
+
+    let mut maze = maze.clone();
+
+    let mut current_round: Vec<State> = Vec::default();
+    let mut next_round: Vec<State> = Vec::default();
+    next_round.push(State(*start, 1, 0));
 
     loop {
         std::mem::swap(&mut current_round, &mut next_round);
@@ -76,44 +93,41 @@ fn solve_first(input: &Maze) -> usize {
 
         let mut found: Option<usize> = None;
 
-        for state in &current_round {
+        for &State(initial_position, direction, current_score) in &current_round {
             let mut i = 0;
             loop {
-                let current_pos = (state.0 as isize + i * state.1) as usize;
+                let current_position = (initial_position as isize + i * direction) as usize;
 
-                if input.tiles[current_pos] {
+                if maze[current_position] & WALL_MASK == 1 {
                     break;
                 }
 
-                if current_pos == input.end {
-                    let score = state.2 + i as usize;
+                if current_position == *end {
+                    let score = current_score + i as usize;
                     match found {
                         Some(num) => if num > score { found = Some(score); },
                         None => found = Some(score),
                     };
                 }
 
-                let right = right(state.1, input.width);
-                let right_pos = (current_pos as isize + right) as usize;
-                if !input.tiles[right_pos] {
-                    if visited.insert((current_pos, right)) {
-                        next_round.insert((current_pos, right, state.2 + 1000 + i as usize));
-                        newly_visited.insert((current_pos, right));
-                    } else if newly_visited.contains(&(current_pos, right)) {
-                        next_round.insert((current_pos, right, state.2 + 1000 + i as usize));
+                let right = right(direction);
+                let right_position = (current_position as isize + right) as usize;
+                if maze[right_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(right)) == 0  {
+                    let right_state = State(current_position, right, current_score + 1000 + i as usize);
+                    if !next_round.contains(&right_state) {
+                        next_round.push(right_state);
                     }
                 }
 
-                let left = left(state.1, input.width);
-                let left_pos = (current_pos as isize + left) as usize;
-                if !input.tiles[left_pos] {
-                    if visited.insert((current_pos, left)) {
-                        next_round.insert((current_pos, left, state.2 + 1000 + i as usize));
-                        newly_visited.insert((current_pos, left));
-                    } else if newly_visited.contains(&(current_pos, left)) {
-                        next_round.insert((current_pos, left, state.2 + 1000 + i as usize));
+                let left = left(direction);
+                let left_position = (current_position as isize + left) as usize;
+                if maze[left_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(left)) == 0 {
+                    let left_state = State(current_position, left, current_score + 1000 + i as usize);
+                    if !next_round.contains(&left_state) {
+                        next_round.push(left_state);
                     }
                 }
+
                 i += 1;
             }
         }
@@ -122,117 +136,113 @@ fn solve_first(input: &Maze) -> usize {
             return score;
         }
 
-        newly_visited.clear();
+        for &State(position, direction, _) in &next_round {
+            maze[position] |= 1 << direction_index(direction);
+        }
     }
 }
 
-#[derive(Clone, Hash)]
-struct PathPoint {
-    index: usize,
-    direction: isize,
-    score: usize,
-    last: Option<Rc<PathPoint>>
+#[derive(Debug, Clone, Copy)]
+enum StateSave {
+    Zero,
+    One(State),
+    Two(State, State)
 }
 
-fn solve_second(input: &Maze) -> usize {
-    let mut visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(4096, FxBuildHasher);
-    let mut newly_visited: FxHashSet<(usize, isize)> = FxHashSet::with_capacity_and_hasher(256, FxBuildHasher);
+impl StateSave {
+    fn upgrade(&mut self, other: &State) {
+        *self = match self {
+            StateSave::Zero => StateSave::One(*other),
+            StateSave::One(state) if state.2 / 1000 < other.2 / 1000 => *self,
+            StateSave::One(state) if state.2 == other.2 && *state == *other => *self,
+            StateSave::One(state) if state.2 / 1000 == other.2 / 1000 => StateSave::Two(*state, *other),
+            StateSave::One(_) => StateSave::One(*other),
+            StateSave::Two(state, _) if state.2 / 1000 > other.2 / 1000 => StateSave::One(*other),
+            StateSave::Two(state, _) if state.2 / 1000 <= other.2 / 1000 => *self,
+            _ => panic!("Unupgradable {self:?} with updgrade {other:?}")
+        }
+    } 
 
-    let mut current_round: Vec<Rc<PathPoint>> = vec![];
-    let mut next_round: Vec<Rc<PathPoint>> = vec![
-        Rc::new(PathPoint {
-            index: input.start, 
-            direction: 1, 
-            score: 0,
-            last: None 
-        })
-    ];
+    fn has_some(&self) -> bool {
+        match self {
+            StateSave::Zero => false,
+            _ => true
+        }
+    }
 
-    let mut paths: Vec<PathPoint> = Vec::with_capacity(256);
+    fn get_first(&self) -> State {
+        match self {
+            StateSave::Zero => panic!(),
+            StateSave::One(state) => *state,
+            StateSave::Two(state, _) => *state,
+        }
+    }
+
+    fn pop(&mut self) -> StateSave {
+        let value = *self;
+        *self = StateSave::Zero;
+        value
+    }
+}
+
+impl Default for StateSave {
+    fn default() -> Self {
+        return Self::Zero
+    }
+}
+
+fn solve_second(input: &(Maze, usize, usize)) -> usize {
+    let (maze, start, end) = input;
+
+    let mut maze = maze.clone();
+    let mut last_points: LastPoints = FlatGrid::default();
+
+    let mut current_round: Vec<State> = Vec::default();
+    let mut next_round: Vec<State> = Vec::default();
+    next_round.push(State(*start, 1, 0));
 
     loop {
         std::mem::swap(&mut current_round, &mut next_round);
         next_round.clear();
 
-        let mut found: Option<usize> = None;
+        let mut found: StateSave = StateSave::Zero;
 
-        for state in &current_round {
+        for initial_state in &current_round {
+            let &State(initial_position, direction, current_score) = initial_state;
             let mut i = 0;
             loop {
-                let current_pos = (state.index as isize + i * state.direction) as usize;
-                
-                if input.tiles[current_pos] {
+                let current_position = (initial_position as isize + i * direction) as usize;
+
+                if maze[current_position] & WALL_MASK == 1 {
                     break;
                 }
 
-                if current_pos == input.end {
-                    let score = state.score + i as usize;
-                    match found {
-                        Some(num) => if score <= num { 
-                            found = Some(score);  
-
-                            if score < num {
-                                paths.clear();
-                            }
-                            
-                            paths.push(PathPoint {
-                                index: current_pos,
-                                direction: state.direction,
-                                score,
-                                last: Some(Rc::clone(state)),
-                            });
-                        },
-                        None => {
-                            found = Some(score);
-                            paths.push(PathPoint {
-                                index: current_pos,
-                                direction: state.direction,
-                                score,
-                                last: Some(Rc::clone(state)),
-                            });
-                        },
-                    };
+                if current_position == *end {
+                    let score = current_score + i as usize + 1000;
+                    found.upgrade(&State(current_position, direction, score));
                 }
 
-                let right = right(state.direction, input.width);
-                let right_pos = (current_pos as isize + right) as usize;
-                if !input.tiles[right_pos] {
-                    if visited.insert((current_pos, right)) {
-                        next_round.push(Rc::new(PathPoint {
-                            index: current_pos,
-                            direction: right,
-                            score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(state)),
-                        }));
-                        newly_visited.insert((current_pos, right));
-                    } else if newly_visited.contains(&(current_pos, right)) {
-                        next_round.push(Rc::new(PathPoint {
-                            index: current_pos,
-                            direction: right,
-                            score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(state)),
-                        }));
+                let right = right(direction);
+                let right_position = (current_position as isize + right) as usize;
+                if maze[right_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(right)) == 0  {
+                    let right_state = State(current_position, right, current_score + 1000 + i as usize);
+                    if !next_round.contains(&right_state) {
+                        if current_position != initial_position {
+                            last_points[current_position].upgrade(&initial_state);
+                        }
+                        next_round.push(right_state);
                     }
                 }
 
-                let left = left(state.direction, input.width);
-                let left_pos = (current_pos as isize + left) as usize;
-                if !input.tiles[left_pos] {
-                    if visited.insert((current_pos, left)) {
-                        next_round.push(Rc::new(PathPoint {
-                            index: current_pos,
-                            direction: left,
-                            score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(state)),
-                        }));
-                        newly_visited.insert((current_pos, left));
-                    } else if newly_visited.contains(&(current_pos, left)) {
-                        next_round.push(Rc::new(PathPoint {
-                            index: current_pos,
-                            direction: left,
-                            score: state.score + 1000 + i as usize,
-                            last: Some(Rc::clone(state)),
-                        }));
+                let left = left(direction);
+                let left_position = (current_position as isize + left) as usize;
+                if maze[left_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(left)) == 0 {
+                    let left_state = State(current_position, left, current_score + 1000 + i as usize);
+                    if !next_round.contains(&left_state) {
+                        if current_position != initial_position {
+                            last_points[current_position].upgrade(&initial_state);
+                        }
+                        next_round.push(left_state);
                     }
                 }
 
@@ -240,39 +250,34 @@ fn solve_second(input: &Maze) -> usize {
             }
         }
 
-        if found.is_some() {
-            let mut path_tiles: FxHashSet<usize> = HashSet::default();
+        if found.has_some() {
+            let mut score = 1;
 
-            for path in paths {
-                let mut path = &path;
+            let mut queue = VecDeque::from([found.get_first()]);
 
-                loop {
-                    if let Some(previous_path) = &path.last {
-                        let mut i = 1;
-                        loop {
-                            let pos = (previous_path.index as isize + i * previous_path.direction) as usize;
-                            path_tiles.insert(pos);
+            while let Some(next) = queue.pop_front() {
+                match last_points[next.0].pop() {
+                    StateSave::Zero => { },
+                    StateSave::One(state) => {
+                        queue.push_back(state);
 
-                            if pos == path.index {
-                                break;
-                            }
+                        score += next.2 - state.2 - 1000;
+                    },
+                    StateSave::Two(state, state1) => {
+                        queue.push_back(state);
+                        queue.push_back(state1);
 
-                            i += 1;
-                        }
-
-                        path = previous_path;
-                    } else {
-                        path_tiles.insert(path.index);
-                        break;
-                    }
+                        score += next.2 - state.2 - 1000;
+                        score += next.2 - state1.2 - 1000;
+                    },
                 }
             }
 
-            return path_tiles.len();
+            return score;
         }
 
-        paths.clear();
-
-        newly_visited.clear();
+        for &State(position, direction, _) in &next_round {
+            maze[position] |= 1 << direction_index(direction);
+        }
     }
 }
