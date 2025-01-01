@@ -1,15 +1,10 @@
-use std::{cmp::Ordering, collections::{HashSet, VecDeque}, fs::{self}, hash::Hash, io::stdin, rc::Rc};
-
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use std::fs::{self};
 
 use crate::{solutions, util::flatgrid::FlatGrid};
 
 solutions!{2024, 16}
 
-type Maze = FlatGrid<u8, 141, 141>;
-type LastPoints = FlatGrid<StateSave, 141, 141>;
-
-const WALL_MASK: u8 = 1;
+type Maze = FlatGrid<isize, 141, 141>;
 
 fn get_input(file: &str) -> (Maze, usize, usize) {
     let file = fs::read_to_string(file).expect("No file there");
@@ -20,7 +15,7 @@ fn get_input(file: &str) -> (Maze, usize, usize) {
 
     for (y, line) in file.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            maze.push((c == '#') as u8);
+            maze.push(if c == '#' { isize::MIN } else { 0 });
 
             if c == 'S' {
                 start = Maze::to_index(x, y);
@@ -29,6 +24,8 @@ fn get_input(file: &str) -> (Maze, usize, usize) {
             }
         }
     }
+
+    paint_maze(&mut maze, start, end);
 
     (maze, start, end)
 }
@@ -45,25 +42,13 @@ fn right(direction: isize) -> isize {
 }
 
 #[inline(always)]
-fn direction_index(direction: isize) -> usize {
-    match direction {
-        1 => 1,
-        _ if direction == Maze::width() as isize => 2,
-        -1 => 3,
-        _ if direction == -(Maze::width() as isize) => 4,
-        dir => panic!("Invalid direction {dir}")
-    }
-}
-
-
-#[inline(always)]
 fn left(direction: isize) -> isize {
     -right(direction)
 }
 
 // Position, Direction, Length
 #[derive(Eq, Debug, Clone, Copy)]
-struct State(usize, isize, usize);
+struct State(usize, isize, isize);
 
 impl PartialEq for State {
     fn eq(&self, other: &Self) -> bool {
@@ -71,49 +56,44 @@ impl PartialEq for State {
     }
 }
 
-impl Hash for State {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-        self.1.hash(state);
-    }
-}
-
-fn solve_first(input: &(Maze, usize, usize)) -> usize {
-    let (maze, start, end) = input;
-
-    let mut maze = maze.clone();
-
+fn paint_maze(maze: &mut Maze, start: usize, end: usize) {
     let mut current_round: Vec<State> = Vec::default();
     let mut next_round: Vec<State> = Vec::default();
-    next_round.push(State(*start, 1, 0));
+    next_round.push(State(start, 1, 0));
 
     loop {
         std::mem::swap(&mut current_round, &mut next_round);
         next_round.clear();
 
-        let mut found: Option<usize> = None;
+        let mut found: Option<isize> = None;
 
-        for &State(initial_position, direction, current_score) in &current_round {
+        for &State(initial_position, direction, initial_score) in &current_round {
             let mut i = 0;
             loop {
                 let current_position = (initial_position as isize + i * direction) as usize;
+                let current_score = initial_score + i;
 
-                if maze[current_position] & WALL_MASK == 1 {
+                let inplace_score = maze[current_position];
+
+                if inplace_score != 0 && current_score >= inplace_score {
                     break;
                 }
 
-                if current_position == *end {
-                    let score = current_score + i as usize;
-                    match found {
-                        Some(num) => if num > score { found = Some(score); },
-                        None => found = Some(score),
-                    };
+                maze[current_position] = current_score;
+
+                if current_position == end {
+                    found = Some(current_score);
+                    break;
                 }
+
+                let turn_score = current_score + 1000 + 1;
 
                 let right = right(direction);
                 let right_position = (current_position as isize + right) as usize;
-                if maze[right_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(right)) == 0  {
-                    let right_state = State(current_position, right, current_score + 1000 + i as usize);
+                let right_inplace = maze[right_position];
+
+                if right_inplace == 0 || turn_score < right_inplace {
+                    let right_state = State(right_position, right, turn_score);
                     if !next_round.contains(&right_state) {
                         next_round.push(right_state);
                     }
@@ -121,10 +101,12 @@ fn solve_first(input: &(Maze, usize, usize)) -> usize {
 
                 let left = left(direction);
                 let left_position = (current_position as isize + left) as usize;
-                if maze[left_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(left)) == 0 {
-                    let left_state = State(current_position, left, current_score + 1000 + i as usize);
-                    if !next_round.contains(&left_state) {
-                        next_round.push(left_state);
+                let left_inplace = maze[left_position];
+                
+                if left_inplace == 0 || turn_score < left_inplace {
+                    let right_state = State(left_position, left, turn_score);
+                    if !next_round.contains(&right_state) {
+                        next_round.push(right_state);
                     }
                 }
 
@@ -132,152 +114,53 @@ fn solve_first(input: &(Maze, usize, usize)) -> usize {
             }
         }
 
-        if let Some(score) = found {
-            return score;
-        }
-
-        for &State(position, direction, _) in &next_round {
-            maze[position] |= 1 << direction_index(direction);
+        if found.is_some() {
+            return;
         }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum StateSave {
-    Zero,
-    One(State),
-    Two(State, State)
+fn solve_first(input: &(Maze, usize, usize)) -> isize {
+    input.0[input.2]
 }
 
-impl StateSave {
-    fn upgrade(&mut self, other: &State) {
-        *self = match self {
-            StateSave::Zero => StateSave::One(*other),
-            StateSave::One(state) if state.2 / 1000 < other.2 / 1000 => *self,
-            StateSave::One(state) if state.2 == other.2 && *state == *other => *self,
-            StateSave::One(state) if state.2 / 1000 == other.2 / 1000 => StateSave::Two(*state, *other),
-            StateSave::One(_) => StateSave::One(*other),
-            StateSave::Two(state, _) if state.2 / 1000 > other.2 / 1000 => StateSave::One(*other),
-            StateSave::Two(state, _) if state.2 / 1000 <= other.2 / 1000 => *self,
-            _ => panic!("Unupgradable {self:?} with updgrade {other:?}")
-        }
-    } 
-
-    fn has_some(&self) -> bool {
-        match self {
-            StateSave::Zero => false,
-            _ => true
-        }
-    }
-
-    fn get_first(&self) -> State {
-        match self {
-            StateSave::Zero => panic!(),
-            StateSave::One(state) => *state,
-            StateSave::Two(state, _) => *state,
-        }
-    }
-
-    fn pop(&mut self) -> StateSave {
-        let value = *self;
-        *self = StateSave::Zero;
-        value
-    }
-}
-
-impl Default for StateSave {
-    fn default() -> Self {
-        return Self::Zero
-    }
-}
+const VISITED: isize = -2;
 
 fn solve_second(input: &(Maze, usize, usize)) -> usize {
-    let (maze, start, end) = input;
-
+    let (maze, _, end) = input;
     let mut maze = maze.clone();
-    let mut last_points: LastPoints = FlatGrid::default();
 
-    let mut current_round: Vec<State> = Vec::default();
-    let mut next_round: Vec<State> = Vec::default();
-    next_round.push(State(*start, 1, 0));
+    let mut tiles = 0;
 
-    loop {
-        std::mem::swap(&mut current_round, &mut next_round);
-        next_round.clear();
+    let mut queue = Vec::from([*end]);
 
-        let mut found: StateSave = StateSave::Zero;
+    while let Some(current_position) = queue.pop() {
+        let current_value = maze[current_position];
 
-        for initial_state in &current_round {
-            let &State(initial_position, direction, current_score) = initial_state;
-            let mut i = 0;
-            loop {
-                let current_position = (initial_position as isize + i * direction) as usize;
+        let right_value = maze[Maze::moved_horizontally(current_position, 1)];
+        let left_value = maze[Maze::moved_horizontally(current_position, -1)];
+        let top_value = maze[Maze::moved_vertically(current_position, 1)];
+        let bottom_value = maze[Maze::moved_vertically(current_position, -1)];
 
-                if maze[current_position] & WALL_MASK == 1 {
-                    break;
-                }
-
-                if current_position == *end {
-                    let score = current_score + i as usize + 1000;
-                    found.upgrade(&State(current_position, direction, score));
-                }
-
-                let right = right(direction);
-                let right_position = (current_position as isize + right) as usize;
-                if maze[right_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(right)) == 0  {
-                    let right_state = State(current_position, right, current_score + 1000 + i as usize);
-                    if !next_round.contains(&right_state) {
-                        if current_position != initial_position {
-                            last_points[current_position].upgrade(&initial_state);
-                        }
-                        next_round.push(right_state);
-                    }
-                }
-
-                let left = left(direction);
-                let left_position = (current_position as isize + left) as usize;
-                if maze[left_position] & WALL_MASK == 0 && maze[current_position] & (1 << direction_index(left)) == 0 {
-                    let left_state = State(current_position, left, current_score + 1000 + i as usize);
-                    if !next_round.contains(&left_state) {
-                        if current_position != initial_position {
-                            last_points[current_position].upgrade(&initial_state);
-                        }
-                        next_round.push(left_state);
-                    }
-                }
-
-                i += 1;
-            }
+        if right_value == current_value - 1 || right_value == current_value - 1001 || (right_value == current_value + 999 && left_value == VISITED) {
+            queue.push(Maze::moved_horizontally(current_position, 1));
         }
 
-        if found.has_some() {
-            let mut score = 1;
-
-            let mut queue = VecDeque::from([found.get_first()]);
-
-            while let Some(next) = queue.pop_front() {
-                match last_points[next.0].pop() {
-                    StateSave::Zero => { },
-                    StateSave::One(state) => {
-                        queue.push_back(state);
-
-                        score += next.2 - state.2 - 1000;
-                    },
-                    StateSave::Two(state, state1) => {
-                        queue.push_back(state);
-                        queue.push_back(state1);
-
-                        score += next.2 - state.2 - 1000;
-                        score += next.2 - state1.2 - 1000;
-                    },
-                }
-            }
-
-            return score;
+        if left_value == current_value - 1 || left_value == current_value - 1001 || (left_value == current_value + 999 && right_value == VISITED) {
+            queue.push(Maze::moved_horizontally(current_position, -1));
         }
 
-        for &State(position, direction, _) in &next_round {
-            maze[position] |= 1 << direction_index(direction);
+        if top_value == current_value - 1 || top_value == current_value - 1001 || (top_value == current_value + 999 && bottom_value == VISITED) {
+            queue.push(Maze::moved_vertically(current_position, 1));
         }
+
+        if bottom_value == current_value - 1 || bottom_value == current_value - 1001 || (bottom_value == current_value + 999 && top_value == VISITED) {
+            queue.push(Maze::moved_vertically(current_position, -1));
+        }
+
+        tiles += 1;
+        maze[current_position] = VISITED;
     }
+
+    tiles
 }
