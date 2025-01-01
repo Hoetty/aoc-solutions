@@ -1,4 +1,4 @@
-use std::fs::{self};
+use std::{collections::VecDeque, fs::{self}};
 
 use crate::{solutions, util::flatgrid::FlatGrid};
 
@@ -57,61 +57,50 @@ impl PartialEq for State {
 }
 
 fn paint_maze(maze: &mut Maze, start: usize, end: usize) {
-    let mut current_round: Vec<State> = Vec::default();
-    let mut next_round: Vec<State> = Vec::default();
-    next_round.push(State(start, 1, 0));
+    let mut queue = VecDeque::from([State(start, 1, 0)]);
 
-    loop {
-        std::mem::swap(&mut current_round, &mut next_round);
-        next_round.clear();
+    let mut found: Option<isize> = None;
 
-        let mut found: Option<isize> = None;
+    while let Some(State(initial_position, direction, initial_score)) = queue.pop_front() {
+        let mut i = 0;
+        loop {
+            let current_position = (initial_position as isize + i * direction) as usize;
+            let current_score = initial_score + i;
 
-        for &State(initial_position, direction, initial_score) in &current_round {
-            let mut i = 0;
-            loop {
-                let current_position = (initial_position as isize + i * direction) as usize;
-                let current_score = initial_score + i;
+            let inplace_score = maze[current_position];
 
-                let inplace_score = maze[current_position];
-
-                if inplace_score != 0 && current_score >= inplace_score {
-                    break;
-                }
-
-                maze[current_position] = current_score;
-
-                if current_position == end {
-                    found = Some(current_score);
-                    break;
-                }
-
-                let turn_score = current_score + 1000 + 1;
-
-                let right = right(direction);
-                let right_position = (current_position as isize + right) as usize;
-                let right_inplace = maze[right_position];
-
-                if right_inplace == 0 || turn_score < right_inplace {
-                    let right_state = State(right_position, right, turn_score);
-                    if !next_round.contains(&right_state) {
-                        next_round.push(right_state);
-                    }
-                }
-
-                let left = left(direction);
-                let left_position = (current_position as isize + left) as usize;
-                let left_inplace = maze[left_position];
-                
-                if left_inplace == 0 || turn_score < left_inplace {
-                    let right_state = State(left_position, left, turn_score);
-                    if !next_round.contains(&right_state) {
-                        next_round.push(right_state);
-                    }
-                }
-
-                i += 1;
+            if inplace_score != 0 && current_score >= inplace_score {
+                break;
             }
+
+            maze[current_position] = current_score;
+
+            if current_position == end {
+                found = Some(current_score);
+                break;
+            }
+
+            let turn_score = current_score + 1000 + 1;
+
+            let right = right(direction);
+            let right_position = (current_position as isize + right) as usize;
+            let right_inplace = maze[right_position];
+
+            if right_inplace == 0 || turn_score < right_inplace {
+                let right_state = State(right_position, right, turn_score);
+                queue.push_back(right_state);
+            }
+
+            let left = left(direction);
+            let left_position = (current_position as isize + left) as usize;
+            let left_inplace = maze[left_position];
+            
+            if left_inplace == 0 || turn_score < left_inplace {
+                let right_state = State(left_position, left, turn_score);
+                queue.push_back(right_state);
+            }
+
+            i += 1;
         }
 
         if found.is_some() {
