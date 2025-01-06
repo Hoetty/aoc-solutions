@@ -35,9 +35,11 @@ fn get_input(file: &str) -> (Towels, Vec<Vec<u8>>) {
         towels[pattern[0] as usize].push(pattern);
     }
 
+    let possible_patterns = second.lines().map(&string_to_num).filter(|target| is_possible(target, &towels)).collect();
+
     (
         towels,
-        second.lines().map(&string_to_num).collect()
+        possible_patterns
     )
 }
 
@@ -56,7 +58,7 @@ fn is_possible<'a>(target: &'a [u8], towels: &Towels) -> bool {
 }
 
 fn solve_first(input: &(Towels, Vec<Vec<u8>>)) -> usize {
-    input.1.iter().filter(|target| is_possible(target, &input.0)).count()
+    input.1.len()
 }
 
 fn possibilities<'a>(target: &'a [u8], towels: &Towels, cache: &mut FxHashMap<&'a[u8], u64>) -> u64 {
