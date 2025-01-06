@@ -28,19 +28,13 @@ fn get_input(file: &str) -> (UnGraph<(), (), u16>, Triangles) {
 fn find_triangles(graph: &UnGraph<(), (), u16>) -> Triangles {
     let mut graph = graph.clone();
 
-    let mut nodes: Vec<Vec<NodeIndex<u16>>> = vec![Vec::with_capacity(5); graph.node_indices().map(|n| graph.edges(n).count()).max().unwrap() + 1];
-    
-    for node in graph.node_indices() {
-        nodes[graph.edges(node).count()].push(node);
-    }
-    
     let mut triangles: Triangles = Vec::new();
 
     let mut marked: Vec<u16> = vec![0; u16::MAX as usize + 1];
 
     let mut round = 1;
 
-    for &node in nodes.iter().flatten().rev() {
+    for node in graph.node_indices().rev() {
         for neighbor in graph.neighbors(node) {
             marked[neighbor.index()] = round;
         }
