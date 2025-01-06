@@ -162,11 +162,18 @@ impl <T, const W: usize, const H: usize> FlatGrid<T, W, H> {
         (index as isize + Self::movement(horizontal, vertical)) as usize
     }
 
-    /// Provices an iterator over the entire grids indices
+    /// Provides an iterator over the entire grids indices
     #[inline(always)]
     pub const fn indices() -> Range<usize> {
         0..Self::area()
     }
+
+    /// Returns the last index on the grid
+    #[inline(always)]
+    pub const fn last_index() -> usize {
+        Self::area() - 1
+    }
+
 }
 
 impl <T, const W: usize, const H: usize> From<Vec<T>> for FlatGrid<T, W, H> {
