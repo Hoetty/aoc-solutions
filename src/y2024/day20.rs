@@ -1,93 +1,79 @@
 use std::fs;
 
-use crate::solutions;
+use crate::{solutions, util::flatgrid::FlatGrid};
 
 solutions!{2024, 20}
 
-#[derive(Clone)]
-struct Maze {
-    tiles: Vec<bool>,
-    start: usize,
-    end: usize,
-    width: usize
-}
+type Maze = FlatGrid<u16, 141, 141>;
 
-fn get_input(file: &str) -> Maze {
+fn get_input(file: &str) -> (Maze, usize, usize) {
     let file = fs::read_to_string(file).expect("No file there");
     
-    let mut tiles: Vec<bool> = Vec::new();
+    let mut maze: Maze = Maze::new();
     let mut start = 0;
     let mut end = 0;
-    let mut width = 0;
 
     for (y, line) in file.lines().enumerate() {
-        width = line.len();
         for (x, c) in line.chars().enumerate() {
-            tiles.push(c == '#');
+            maze.push(if c == '#' { u16::MAX - 1 } else { u16::MAX });
 
             if c == 'S' {
-                start = y * width + x;
+                start = Maze::to_index(x, y);
             } else if c == 'E' {
-                end = y * width + x;
+                end = Maze::to_index(x, y);
             }
         }
     }
 
-    Maze {
-        tiles,
-        start,
-        end,
-        width
-    }
+    (maze, start, end)
 }
 
 const MIN_SKIP_DISTANCE: u32 = 100;
 
-fn solve_first(input: &Maze) -> usize {
-    let mut tiles: Vec<u16> = input.tiles.iter().map(|b| if *b { u16::MAX - 1 } else { u16::MAX }).collect();
-    let area = tiles.len();
-    let floor = input.width * 2;
-    let ceiling = area - floor;
+fn solve_first(input: &(Maze, usize, usize)) -> usize {
+    let (maze, start, end) = input;
+    let mut maze = maze.clone();
+    let (start, end) = (*start, *end);
 
     let mut distance = 0;
     let mut sub_hundred = 0;
-    let mut pos = input.end;
+    let mut pos = end;
 
     loop {
-        tiles[pos] = distance;
+        maze[pos] = distance;
 
         if distance >= 102 {
-            if pos % input.width > 1 && tiles[pos - 2] <= distance - 102 {
+            if !Maze::will_horizontal_move_cross_border(pos, -2) && maze[Maze::moved_horizontally(pos, -2)] <= distance - 102 {
                 sub_hundred += 1;
             }
 
-            if pos % input.width < input.width - 2 && tiles[pos + 2] <= distance - 102 {
+            if !Maze::will_horizontal_move_cross_border(pos, 2) && maze[Maze::moved_horizontally(pos, 2)] <= distance - 102 {
                 sub_hundred += 1;
             }
 
-            if pos >= floor && tiles[pos - floor] <= distance - 102 {
+            if !Maze::will_vertical_move_cross_border(pos, -2) && maze[Maze::moved_vertically(pos, -2)] <= distance - 102 {
                 sub_hundred += 1;
             }
 
-            if pos < ceiling && tiles[pos + floor] <= distance - 102 {
+            if !Maze::will_vertical_move_cross_border(pos, 2) && maze[Maze::moved_vertically(pos, 2)] <= distance - 102 {
                 sub_hundred += 1;
             }
         }
 
-        if pos == input.start {
+        if pos == start {
             break;
         }
 
         distance += 1;
 
-        if tiles[pos + 1] == u16::MAX {
+        if maze[Maze::moved_horizontally(pos, 1)] == u16::MAX {
             pos += 1;
-        } else if tiles[pos - 1] == u16::MAX {
+        } else if maze[Maze::moved_horizontally(pos, -1)] == u16::MAX {
             pos -= 1;
-        } else if tiles[pos + input.width] == u16::MAX {
-            pos += input.width;
-        } else if tiles[pos - input.width] == u16::MAX {
-            pos -= input.width;
+        } else if maze[Maze::moved_vertically(pos, 1)] == u16::MAX {
+            pos += Maze::width();
+        } else if maze[Maze::moved_vertically(pos, -1)] == u16::MAX {
+            pos -= Maze::width();
         } else {
             panic!();
         }
@@ -98,33 +84,33 @@ fn solve_first(input: &Maze) -> usize {
 
 const CHEAT_DISTANCE: usize = 20;
 
-fn solve_second(input: &Maze) -> usize {
-    let mut tiles: Vec<u16> = input.tiles.iter().map(|b| if *b { 0 } else { u16::MAX }).collect();
-    let area = tiles.len();
+fn solve_second(input: &(Maze, usize, usize)) -> usize {
+    let (maze, start, end) = input;
+    let mut maze = maze.clone();
+    let (start, end) = (*start, *end);
 
-    let mut pos = input.end;
-    let mut path: Vec<(u8, u8)> = Vec::with_capacity(area / 4);
+    let mut pos = end;
+    let mut path: Vec<(u8, u8)> = Vec::with_capacity(Maze::area() / 4);
 
     loop {
-        tiles[pos] = 0;
+        maze[pos] = 0;
 
-        let y = pos / input.width;
-        let x = pos - y * input.width;
+        let (x, y) = Maze::to_coordinates(pos);
 
         path.push((x as u8, y as u8));
 
-        if pos == input.start {
+        if pos == start {
             break;
         }
 
-        if tiles[pos + 1] == u16::MAX {
+        if maze[Maze::moved_horizontally(pos, 1)] == u16::MAX {
             pos += 1;
-        } else if tiles[pos - 1] == u16::MAX {
+        } else if maze[Maze::moved_horizontally(pos, -1)] == u16::MAX {
             pos -= 1;
-        } else if tiles[pos + input.width] == u16::MAX {
-            pos += input.width;
-        } else if tiles[pos - input.width] == u16::MAX {
-            pos -= input.width;
+        } else if maze[Maze::moved_vertically(pos, 1)] == u16::MAX {
+            pos += Maze::width();
+        } else if maze[Maze::moved_vertically(pos, -1)] == u16::MAX {
+            pos -= Maze::width();
         } else {
             panic!();
         }
