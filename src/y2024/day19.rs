@@ -43,7 +43,7 @@ fn get_input(file: &str) -> (Towels, Vec<Vec<u8>>) {
     )
 }
 
-fn is_possible<'a>(target: &'a [u8], towels: &Towels) -> bool {
+fn is_possible(target: &[u8], towels: &Towels) -> bool {
     for towel in &towels[target[0] as usize] {
         if towel.len() > target.len() || !target.starts_with(towel) {
             continue;
