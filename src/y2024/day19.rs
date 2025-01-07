@@ -1,6 +1,6 @@
 use std::fs;
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::solutions;
 
@@ -86,5 +86,5 @@ fn possibilities<'a>(target: &'a [u8], towels: &Towels, cache: &mut FxHashMap<&'
 }
 
 fn solve_second(input: &(Towels, Vec<Vec<u8>>)) -> u64 {
-    input.1.iter().map(|target| possibilities(target, &input.0, &mut FxHashMap::default())).sum()
+    input.1.iter().map(|target| possibilities(target, &input.0, &mut FxHashMap::with_capacity_and_hasher(192, FxBuildHasher))).sum()
 }
