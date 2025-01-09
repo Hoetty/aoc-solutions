@@ -35,7 +35,10 @@ fn get_input(file: &str) -> (Towels, Vec<Vec<u8>>) {
         towels[pattern[0] as usize].push(pattern);
     }
 
-    let possible_patterns = second.lines().map(&string_to_num).filter(|target| is_possible(target, &towels)).collect();
+    let possible_patterns = second.lines()
+        .map(&string_to_num)
+        .filter(|target| is_possible(target, &towels))
+        .collect();
 
     (
         towels,
@@ -43,12 +46,18 @@ fn get_input(file: &str) -> (Towels, Vec<Vec<u8>>) {
     )
 }
 
+/// Checks if a pattern is possible
+/// Only Towels that have the first stripe correct are checked if they match
+/// For each towel, check if the towel isnt longer than the target pattern
+/// and if the target starts with the towel. If it does, chop it of and check the remaining pattern
 fn is_possible(target: &[u8], towels: &Towels) -> bool {
     for towel in &towels[target[0] as usize] {
-        if towel.len() > target.len() || !target.starts_with(towel) {
+        if !target.starts_with(towel) {
             continue;
         }
 
+        // At this point we know that the target starts with the towel,
+        // if they are equally long we know the pattern is possible, if not we check the remaining pattern
         if towel.len() == target.len() || is_possible(&target[towel.len()..], towels) {
             return true;
         }
@@ -57,34 +66,40 @@ fn is_possible(target: &[u8], towels: &Towels) -> bool {
     false
 }
 
+/// ### Possible Patterns
+/// Counts how many patterns are possible to produce from the towels
+/// The solution is precomputed by the input and shared among both solutions 
 fn solve_first(input: &(Towels, Vec<Vec<u8>>)) -> usize {
     input.1.len()
 }
 
+/// Calculates how many possibilities there are to produce the target pattern from the given towels
+/// The number of possibilities is how many paths lead to a the target and towel being equal
 fn possibilities<'a>(target: &'a [u8], towels: &Towels, cache: &mut FxHashMap<&'a[u8], u64>) -> u64 {
-    if let Some(v) = cache.get(&target) {
-        return *v;
+    if let Some(cached_possibilities) = cache.get(&target) {
+        return *cached_possibilities;
     }
 
-    let mut found = 0;
-
-    for towel in &towels[target[0] as usize] {
-        if towel.len() > target.len() || !target.starts_with(towel) {
-            continue;
-        }
-
-        found += if towel.len() == target.len() {
-            1
+    let sum_of_possibilities = towels[target[0] as usize].iter().filter_map(|towel| {
+        if !target.starts_with(towel) {
+            None
+        } else if towel.len() == target.len() {
+            Some(1)
         } else {
-            possibilities(&target[towel.len()..], towels, cache)
-        };
-    }
+            Some(possibilities(&target[towel.len()..], towels, cache))
+        }
+    }).sum();
 
-    cache.insert(target, found);
+    cache.insert(target, sum_of_possibilities);
 
-    found
+    sum_of_possibilities
 }
 
+/// ### Possibilities for Patterns
+/// Calculates how many possibilities there are to build all patterns
+/// Only known to be possible patterns are tested
 fn solve_second(input: &(Towels, Vec<Vec<u8>>)) -> u64 {
-    input.1.iter().map(|target| possibilities(target, &input.0, &mut FxHashMap::with_capacity_and_hasher(192, FxBuildHasher))).sum()
+    input.1.iter()
+        .map(|target| possibilities(target, &input.0, &mut FxHashMap::with_capacity_and_hasher(192, FxBuildHasher)))
+        .sum()
 }
