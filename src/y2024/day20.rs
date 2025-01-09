@@ -18,14 +18,15 @@ fn get_input(file: &str) -> (Maze, usize) {
     let mut maze: Maze = Maze::new();
     let mut finish = 0;
 
-    for (y, line) in file.lines().enumerate() {
-        for (x, c) in line.chars().enumerate() {
-            maze.push(if c == WALL_CHAR { WALL } else { AIR });
-
-            if c == FINISH_CHAR {
-                finish = Maze::to_index(x, y);
-            }
+    for character in file.chars() {
+        if character == FINISH_CHAR {
+            finish = maze.len();
         }
+
+        if character != '\n' {
+            maze.push(if character == WALL_CHAR { WALL } else { AIR });
+        }
+
     }
 
     (maze, finish)
@@ -108,6 +109,7 @@ fn solve_second(input: &(Maze, usize)) -> usize {
     let mut pos = finish;
     let mut path: Vec<(usize, usize)> = Vec::with_capacity(Maze::area() / 4);
 
+    // Go through the maze and keep track of the path
     loop {
         maze[pos] = VISITED;
 
@@ -129,31 +131,52 @@ fn solve_second(input: &(Maze, usize)) -> usize {
 
     let mut good_cheats = 0;
 
-    // Iterate through the entire path, except the last 100, where a good skip to a location further up is no longer possible
-    for (lower_index, lower_coords) in path.iter().enumerate().take(path.len() - MIN_SKIP_DISTANCE as usize) {
-        let mut higher_index = 0;
-        let remaining_path = &path[lower_index + MIN_SKIP_DISTANCE as usize..];
-        while higher_index < remaining_path.len() {
-            let higher_coords = remaining_path[higher_index];
-            let distance = lower_coords.0.abs_diff(higher_coords.0) as usize + lower_coords.1.abs_diff(higher_coords.1) as usize;
+    // Iterate through the entire path, except the last 100, where a good skip from a location further up is no longer possible
+    // We walk through the path with a location where we skip to. For each location to skip to, we check the path from 100 tiles further up
+    // for valid locations to jump from
+    for (to_index, to_coords) in path.iter().enumerate().take(path.len() - MIN_SKIP_DISTANCE as usize) {
+        let mut from_index = 0;
 
-            if distance <= higher_index {
+        // The remaining path, where we can skip from, starts 100 tiles further up
+        let remaining_path = &path[to_index + MIN_SKIP_DISTANCE as usize..];
+
+
+        while from_index < remaining_path.len() {
+            let from_coords = remaining_path[from_index];
+            // The distance of the two points is the manhattan distance
+            let distance = to_coords.0.abs_diff(from_coords.0) as usize + to_coords.1.abs_diff(from_coords.1) as usize;
+
+            // If the distance between the points is greate than the index from the start of the remaining path,
+            // then we can't skip as the extra distance we need to walk puts us under 100 net save
+            if distance <= from_index {
+                // We can always safely move at least the distance to the outer end of the diamond area, that marks where cheats are possible
+                // From the inside we can be sure, that when we walk CHEAT_DISTANCE - distance + 1 tiles we will at most be on the rim of the area
+                // Thus we don't need to count all tiles individually, and instead add them in bulk
+                // When we are outside of the area we can walk at least CHEAT_DISTANCE - distance to end up at most right in front of the cheat area
                 if distance <= CHEAT_DISTANCE {
+                    // Safely walk inside the cheat area
                     good_cheats += CHEAT_DISTANCE - distance + 1;
-                    higher_index += CHEAT_DISTANCE - distance + 1;
+                    from_index += CHEAT_DISTANCE - distance + 1;
                 } else {
-                    higher_index += distance - CHEAT_DISTANCE;
+                    // Safely walk outside the cheat are
+                    from_index += distance - CHEAT_DISTANCE;
                 }
             } else {
-                higher_index += 1;
+                // If were are close to the lower end of the remaining path and can't skip yet, advance slowly
+                from_index += 1;
             }
         }
 
-        let higher_coords = remaining_path.last().unwrap();
-        let distance = lower_coords.0.abs_diff(higher_coords.0) as usize + lower_coords.1.abs_diff(higher_coords.1) as usize;
-
-        if distance <= CHEAT_DISTANCE {
-            good_cheats -= higher_index - remaining_path.len();
+        // It is possible to overshoot the remaining path while bulk processing the cheats
+        if from_index > remaining_path.len() {
+            let higher_coords = remaining_path.last().unwrap();
+            let distance = to_coords.0.abs_diff(higher_coords.0) as usize + to_coords.1.abs_diff(higher_coords.1) as usize;
+            
+            // If we overshot we need to check if the last point was a valid cheat
+            if distance <= CHEAT_DISTANCE {
+                // If the last point was counting cheats we need to subtract the overflow
+                good_cheats -= from_index - remaining_path.len();
+            }
         }
 
     }
