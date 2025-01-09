@@ -134,17 +134,17 @@ fn solve_second(input: &(Maze, usize)) -> usize {
     // Iterate through the entire path, except the last 100, where a good skip from a location further up is no longer possible
     // We walk through the path with a location where we skip to. For each location to skip to, we check the path from 100 tiles further up
     // for valid locations to jump from
-    for (to_index, to_coords) in path.iter().enumerate().take(path.len() - MIN_SKIP_DISTANCE as usize) {
+    for (to_index, to_coords) in path.iter().enumerate().take(path.len() - MIN_SKIP_DISTANCE) {
         let mut from_index = 0;
 
         // The remaining path, where we can skip from, starts 100 tiles further up
-        let remaining_path = &path[to_index + MIN_SKIP_DISTANCE as usize..];
+        let remaining_path = &path[to_index + MIN_SKIP_DISTANCE..];
 
 
         while from_index < remaining_path.len() {
             let from_coords = remaining_path[from_index];
             // The distance of the two points is the manhattan distance
-            let distance = to_coords.0.abs_diff(from_coords.0) as usize + to_coords.1.abs_diff(from_coords.1) as usize;
+            let distance = to_coords.0.abs_diff(from_coords.0) + to_coords.1.abs_diff(from_coords.1);
 
             // If the distance between the points is greate than the index from the start of the remaining path,
             // then we can't skip as the extra distance we need to walk puts us under 100 net save
@@ -170,7 +170,7 @@ fn solve_second(input: &(Maze, usize)) -> usize {
         // It is possible to overshoot the remaining path while bulk processing the cheats
         if from_index > remaining_path.len() {
             let higher_coords = remaining_path.last().unwrap();
-            let distance = to_coords.0.abs_diff(higher_coords.0) as usize + to_coords.1.abs_diff(higher_coords.1) as usize;
+            let distance = to_coords.0.abs_diff(higher_coords.0) + to_coords.1.abs_diff(higher_coords.1);
             
             // If we overshot we need to check if the last point was a valid cheat
             if distance <= CHEAT_DISTANCE {
