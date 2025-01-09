@@ -6,137 +6,157 @@ solutions!{2024, 20}
 
 type Maze = FlatGrid<u16, 141, 141>;
 
-fn get_input(file: &str) -> (Maze, usize, usize) {
+const WALL_CHAR: char = '#';
+const FINISH_CHAR: char = 'E';
+
+const WALL: u16 = u16::MAX - 1;
+const AIR: u16 = u16::MAX;
+
+fn get_input(file: &str) -> (Maze, usize) {
     let file = fs::read_to_string(file).expect("No file there");
     
     let mut maze: Maze = Maze::new();
-    let mut start = 0;
-    let mut end = 0;
+    let mut finish = 0;
 
     for (y, line) in file.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            maze.push(if c == '#' { u16::MAX - 1 } else { u16::MAX });
+            maze.push(if c == WALL_CHAR { WALL } else { AIR });
 
-            if c == 'S' {
-                start = Maze::to_index(x, y);
-            } else if c == 'E' {
-                end = Maze::to_index(x, y);
+            if c == FINISH_CHAR {
+                finish = Maze::to_index(x, y);
             }
         }
     }
 
-    (maze, start, end)
+    (maze, finish)
 }
 
-const MIN_SKIP_DISTANCE: u32 = 100;
+const MIN_SKIP_DISTANCE: usize = 100;
+const MIN_DISTANCE_DIFFERENCE: u16 = MIN_SKIP_DISTANCE as u16 + 2;
 
-fn solve_first(input: &(Maze, usize, usize)) -> usize {
-    let (maze, start, end) = input;
-    let mut maze = maze.clone();
-    let (start, end) = (*start, *end);
+/// ### Short Skips
+/// Finds all skips through a single wall where the time save is at least 100
+/// The algorithm starts at the finish and counts up the current distance, setting it to the maze
+/// It then checks the four possible jump locations to see if their distance is at least 102 less, 
+/// to also account for the distance travelled through the wall
+fn solve_first(input: &(Maze, usize)) -> usize {
+    let mut maze = input.0.clone();
+    let finish = input.1;
 
     let mut distance = 0;
-    let mut sub_hundred = 0;
-    let mut pos = end;
+    let mut good_cheats = 0;
+
+    // Start at the finish
+    let mut pos = finish;
 
     loop {
+        // Set the current locations value to its distance from the finish
         maze[pos] = distance;
 
-        if distance >= 102 {
-            if !Maze::will_horizontal_move_cross_border(pos, -2) && maze[Maze::moved_horizontally(pos, -2)] <= distance - 102 {
-                sub_hundred += 1;
+        // Only check when at least a good cheat away from the finish
+        if distance >= MIN_DISTANCE_DIFFERENCE {
+            // For each direction check if the cheat saves at least 100 picoseconds
+            if !Maze::will_horizontal_move_cross_border(pos, -2) && maze[Maze::moved_horizontally(pos, -2)] <= distance - MIN_DISTANCE_DIFFERENCE {
+                good_cheats += 1;
             }
 
-            if !Maze::will_horizontal_move_cross_border(pos, 2) && maze[Maze::moved_horizontally(pos, 2)] <= distance - 102 {
-                sub_hundred += 1;
+            if !Maze::will_horizontal_move_cross_border(pos, 2) && maze[Maze::moved_horizontally(pos, 2)] <= distance - MIN_DISTANCE_DIFFERENCE {
+                good_cheats += 1;
             }
 
-            if !Maze::will_vertical_move_cross_border(pos, -2) && maze[Maze::moved_vertically(pos, -2)] <= distance - 102 {
-                sub_hundred += 1;
+            if !Maze::will_vertical_move_cross_border(pos, -2) && maze[Maze::moved_vertically(pos, -2)] <= distance - MIN_DISTANCE_DIFFERENCE {
+                good_cheats += 1;
             }
 
-            if !Maze::will_vertical_move_cross_border(pos, 2) && maze[Maze::moved_vertically(pos, 2)] <= distance - 102 {
-                sub_hundred += 1;
+            if !Maze::will_vertical_move_cross_border(pos, 2) && maze[Maze::moved_vertically(pos, 2)] <= distance - MIN_DISTANCE_DIFFERENCE {
+                good_cheats += 1;
             }
-        }
-
-        if pos == start {
-            break;
         }
 
         distance += 1;
 
-        if maze[Maze::moved_horizontally(pos, 1)] == u16::MAX {
+        // Check where the next path tile is,
+        // if there is none we reached the start
+        if maze[Maze::moved_horizontally(pos, 1)] == AIR {
             pos += 1;
-        } else if maze[Maze::moved_horizontally(pos, -1)] == u16::MAX {
+        } else if maze[Maze::moved_horizontally(pos, -1)] == AIR {
             pos -= 1;
-        } else if maze[Maze::moved_vertically(pos, 1)] == u16::MAX {
+        } else if maze[Maze::moved_vertically(pos, 1)] == AIR {
             pos += Maze::width();
-        } else if maze[Maze::moved_vertically(pos, -1)] == u16::MAX {
+        } else if maze[Maze::moved_vertically(pos, -1)] == AIR {
             pos -= Maze::width();
         } else {
-            panic!();
+            break;
         }
     }
 
-    sub_hundred
+    good_cheats
 }
 
+const VISITED: u16 = 0;
 const CHEAT_DISTANCE: usize = 20;
 
-fn solve_second(input: &(Maze, usize, usize)) -> usize {
-    let (maze, start, end) = input;
-    let mut maze = maze.clone();
-    let (start, end) = (*start, *end);
+/// ### Long Skips
+/// 
+/// Finds all cheats that travel at most 20 tiles and save at least 100 picoseconds
+/// The entire path is precalculated from finish to start like in part one
+/// Then the entire path is retraced, for each path tile the remaining path is scanned for skips
+fn solve_second(input: &(Maze, usize)) -> usize {
+    let mut maze = input.0.clone();
+    let finish = input.1;
 
-    let mut pos = end;
-    let mut path: Vec<(u8, u8)> = Vec::with_capacity(Maze::area() / 4);
+    let mut pos = finish;
+    let mut path: Vec<(usize, usize)> = Vec::with_capacity(Maze::area() / 4);
 
     loop {
-        maze[pos] = 0;
+        maze[pos] = VISITED;
 
-        let (x, y) = Maze::to_coordinates(pos);
+        path.push(Maze::to_coordinates(pos));
 
-        path.push((x as u8, y as u8));
-
-        if pos == start {
-            break;
-        }
-
-        if maze[Maze::moved_horizontally(pos, 1)] == u16::MAX {
+        if maze[Maze::moved_horizontally(pos, 1)] == AIR {
             pos += 1;
-        } else if maze[Maze::moved_horizontally(pos, -1)] == u16::MAX {
+        } else if maze[Maze::moved_horizontally(pos, -1)] == AIR {
             pos -= 1;
-        } else if maze[Maze::moved_vertically(pos, 1)] == u16::MAX {
+        } else if maze[Maze::moved_vertically(pos, 1)] == AIR {
             pos += Maze::width();
-        } else if maze[Maze::moved_vertically(pos, -1)] == u16::MAX {
+        } else if maze[Maze::moved_vertically(pos, -1)] == AIR {
             pos -= Maze::width();
         } else {
-            panic!();
+            // The start position has been found, as the path has ended
+            break;
         }
     }
 
-    let last_possible_index = path.len() - MIN_SKIP_DISTANCE as usize;
-    let mut sub_hundred = 0;
+    let mut good_cheats = 0;
 
-    for (lower_index, lower_coords) in path.iter().enumerate() {
-        if lower_index >= last_possible_index {
-            break;
-        }
-
+    // Iterate through the entire path, except the last 100, where a good skip to a location further up is no longer possible
+    for (lower_index, lower_coords) in path.iter().enumerate().take(path.len() - MIN_SKIP_DISTANCE as usize) {
         let mut higher_index = 0;
         let remaining_path = &path[lower_index + MIN_SKIP_DISTANCE as usize..];
         while higher_index < remaining_path.len() {
             let higher_coords = remaining_path[higher_index];
             let distance = lower_coords.0.abs_diff(higher_coords.0) as usize + lower_coords.1.abs_diff(higher_coords.1) as usize;
 
-            if distance <= CHEAT_DISTANCE && higher_index >= distance {
-                sub_hundred += 1;
+            if distance <= higher_index {
+                if distance <= CHEAT_DISTANCE {
+                    good_cheats += CHEAT_DISTANCE - distance + 1;
+                    higher_index += CHEAT_DISTANCE - distance + 1;
+                } else {
+                    higher_index += distance - CHEAT_DISTANCE;
+                }
+            } else {
+                higher_index += 1;
             }
-
-            higher_index += 1.max(distance as isize - CHEAT_DISTANCE as isize) as usize;
         }
+
+        let higher_coords = remaining_path.last().unwrap();
+        let distance = lower_coords.0.abs_diff(higher_coords.0) as usize + lower_coords.1.abs_diff(higher_coords.1) as usize;
+
+        if distance <= CHEAT_DISTANCE {
+            good_cheats -= higher_index - remaining_path.len();
+        }
+
     }
 
-    sub_hundred
+    good_cheats
 }
