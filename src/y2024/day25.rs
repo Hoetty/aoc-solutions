@@ -4,15 +4,14 @@ use crate::solutions;
 
 solutions!{2024, 25}
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Heights(u8, u8, u8, u8, u8);
+type Heights = [u8; 5];
 
 fn get_input(file: &str) -> (Vec<Heights>, Vec<Heights>) {
     let file = fs::read_to_string(file).unwrap();
     let patterns = file.split("\n\n");
 
-    let mut templates = Vec::new();
-    let mut keys = Vec::new();
+    let mut templates = Vec::with_capacity(64);
+    let mut keys = Vec::with_capacity(64);
 
     for pattern in patterns {
         let (destination, iter) = if pattern.starts_with('#') {
@@ -30,7 +29,7 @@ fn get_input(file: &str) -> (Vec<Heights>, Vec<Heights>) {
             }
         }
 
-        destination.push(Heights(heights[0], heights[1], heights[2], heights[3], heights[4]));
+        destination.push(heights);
     }
 
     (templates, keys)
@@ -43,7 +42,7 @@ fn solve_first(input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
 
     for template in &input.0 {
         for key in &input.1 {
-            if template.0 + key.0 <= HEIGHT && template.1 + key.1 <= HEIGHT && template.2 + key.2 <= HEIGHT && template.3 + key.3 <= HEIGHT && template.4 + key.4 <= HEIGHT {
+            if template[0] + key[0] <= HEIGHT && template[1] + key[1] <= HEIGHT && template[2] + key[2] <= HEIGHT && template[3] + key[3] <= HEIGHT && template[4] + key[4] <= HEIGHT {
                 fitting += 1;
             }
         }
@@ -52,6 +51,6 @@ fn solve_first(input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
     fitting
 }
 
-fn solve_second(_input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
-    0
+fn solve_second(_input: &(Vec<Heights>, Vec<Heights>)) -> &'static str {
+    ""
 }
