@@ -7,7 +7,7 @@ solutions!{2024, 17}
 const REGISTER_SKIP_LEN: usize = "Register _: ".len();
 const PROGRAM_SKIP_LEN: usize = "Program: ".len();
 
-fn get_input(file: &str) -> ((u64, u64, u64), Vec<u8>) {
+fn get_input(file: &str) -> ((u64, u64, u64), Vec<u64>) {
     let file = fs::read_to_string(file).expect("No file there");
     let lines: Vec<&str> = file.lines().collect();
 
@@ -18,7 +18,7 @@ fn get_input(file: &str) -> ((u64, u64, u64), Vec<u8>) {
     let instructions = lines[4][PROGRAM_SKIP_LEN..]
         .chars()
         .step_by(2)
-        .map(|c| c as u8 - b'0')
+        .map(|c| c as u64 - b'0' as u64)
         .collect();
 
     ((a, b, c), instructions)
@@ -28,9 +28,9 @@ fn get_input(file: &str) -> ((u64, u64, u64), Vec<u8>) {
 /// 0..=3 evaluate to the value itself
 /// Then 4, 5 and 6 correspond to the values in register a, b and c
 #[inline(always)]
-fn combo(value: u8, a: u64, b: u64, c: u64) -> u64 {
+fn combo(value: u64, a: u64, b: u64, c: u64) -> u64 {
     match value {
-        0..=3 => value as u64,
+        0..=3 => value,
         4 => a,
         5 => b,
         6 => c,
@@ -38,7 +38,7 @@ fn combo(value: u8, a: u64, b: u64, c: u64) -> u64 {
     }
 }
 
-fn solve_first(input: &((u64, u64, u64), Vec<u8>)) -> String {
+fn solve_first(input: &((u64, u64, u64), Vec<u64>)) -> String {
     let ((mut a, mut b, mut c), instructions) = input;
 
     let mut ip = 0;
@@ -52,15 +52,15 @@ fn solve_first(input: &((u64, u64, u64), Vec<u8>)) -> String {
 
         match instruction {
             0 => a = a >> combo(opcode, a, b, c),
-            1 => b ^= opcode as u64,
+            1 => b ^= opcode,
             2 => b = combo(opcode, a, b, c) & 0b111,
             3 => if a != 0 {
                 ip = opcode as usize
             },
             4 => b ^= c,
             5 => {
-                let number = (combo(opcode, a, b, c) & 0b111) as u8;
-                output.push((number + b'0') as char);
+                let number = combo(opcode, a, b, c) & 0b111;
+                output.push((number as u8 + b'0') as char);
                 output.push(',');
             },
             6 => b = a >> combo(opcode, a, b, c),
@@ -73,25 +73,27 @@ fn solve_first(input: &((u64, u64, u64), Vec<u8>)) -> String {
     output
 }
 
-fn bytes_num(bytes: &[u8]) -> u64 {
+fn bytes_num(bytes: &[u64]) -> u64 {
     let mut output: u64 = 0;
     for (i, byte) in bytes.iter().enumerate() {
-        output += (*byte as u64) << (i * 3);
+        output += *byte << (i * 3);
     }
     output
 }
 
-fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
+fn solve_second(input: &((u64, u64, u64), Vec<u64>)) -> u64 {
     let ((_, b_initial, c_initial), instructions) = input;
     let target = bytes_num(instructions);
 
-    let mut queue: VecDeque<(u64, u8)> = VecDeque::new();
+    let mut queue: VecDeque<(u64, u64)> = VecDeque::new();
 
     let mut found = u64::MAX;
 
-    queue.push_back((0, instructions.len() as u8 - 1));
+    queue.push_back((0, instructions.len() as u64 - 1));
 
-    while let Some((start_value, position)) = queue.pop_front() {
+    while !queue.is_empty() {
+        let (start_value, position) = queue.pop_front().unwrap();
+
         if start_value > found {
             continue;
         }
@@ -116,14 +118,14 @@ fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
 
                 match instruction {
                     0 => a = a >> combo(opcode, a, b, c),
-                    1 => b ^= opcode as u64,
+                    1 => b ^= opcode,
                     2 => b = combo(opcode, a, b, c) & 0b111,
                     3 => if a != 0 {
                         ip = opcode as usize
                     },
                     4 => b ^= c,
                     5 => {
-                        output |= ((combo(opcode, a, b, c) & 0b111) as u64) << (output_len * 3);
+                        output |= (combo(opcode, a, b, c) & 0b111) << (output_len * 3);
                         output_len += 1;
                     },
                     6 => b = a >> combo(opcode, a, b, c),
