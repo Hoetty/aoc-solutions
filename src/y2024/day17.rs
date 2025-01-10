@@ -1,5 +1,6 @@
+///! Design Choice: The instructions are saved in a u64 even if they can only be between 0 and 8
+///! However, using u64 over u8 results in 32% better performace
 use std::{collections::VecDeque, fs::{self}};
-
 use crate::solutions;
 
 solutions!{2024, 17}
@@ -38,9 +39,14 @@ fn combo(value: u64, a: u64, b: u64, c: u64) -> u64 {
     }
 }
 
+/// ### Program Evaluation
+/// 
+/// Runs through the entire program and returns the output
+/// The specs of the "virtual machine" can be found [here](https://adventofcode.com/2024/day/17)
 fn solve_first(input: &((u64, u64, u64), Vec<u64>)) -> String {
     let ((mut a, mut b, mut c), instructions) = input;
 
+    // Ip is the Instruction Pointer and points to the next instruction to be executed
     let mut ip = 0;
     let mut output = String::new();
 
@@ -50,6 +56,7 @@ fn solve_first(input: &((u64, u64, u64), Vec<u64>)) -> String {
 
         ip += 2;
 
+        // Execute the instruction according to the specs
         match instruction {
             0 => a = a >> combo(opcode, a, b, c),
             1 => b ^= opcode,
@@ -69,10 +76,12 @@ fn solve_first(input: &((u64, u64, u64), Vec<u64>)) -> String {
         }
     }
 
+    // Remove the last comma from the output
     output.pop().unwrap();
     output
 }
 
+/// Converts a set of instructions to a number
 fn bytes_num(bytes: &[u64]) -> u64 {
     let mut output: u64 = 0;
     for (i, byte) in bytes.iter().enumerate() {
@@ -81,27 +90,33 @@ fn bytes_num(bytes: &[u64]) -> u64 {
     output
 }
 
+/// ### Replicating Program
+/// 
+/// Searches for the input value for register a, such that the program outputs itself
+/// A 3 bit set in the input only influences the same offset and lower of the output
+/// So we reconstruct the input 3 bits at a time, from highest to lowest
 fn solve_second(input: &((u64, u64, u64), Vec<u64>)) -> u64 {
     let ((_, b_initial, c_initial), instructions) = input;
     let target = bytes_num(instructions);
 
     let mut queue: VecDeque<(u64, u64)> = VecDeque::new();
 
-    let mut found = u64::MAX;
+    let mut register_a_seed = u64::MAX;
 
     queue.push_back((0, instructions.len() as u64 - 1));
 
     while !queue.is_empty() {
-        let (start_value, position) = queue.pop_front().unwrap();
+        let (start_seed, position) = queue.pop_front().unwrap();
 
-        if start_value > found {
+        if start_seed > register_a_seed {
             continue;
         }
 
+        // We check all 3 bit combinations
         for i in 0..8 {
-            let try_value = start_value | (i << (3 * position));
+            let test_seed = start_seed | (i << (3 * position));
 
-            let mut a = try_value;
+            let mut a = test_seed;
             let mut b = *b_initial;
             let mut c = *c_initial;
 
@@ -125,6 +140,7 @@ fn solve_second(input: &((u64, u64, u64), Vec<u64>)) -> u64 {
                     },
                     4 => b ^= c,
                     5 => {
+                        // We save the output in a number for efficient comparision
                         output |= (combo(opcode, a, b, c) & 0b111) << (output_len * 3);
                         output_len += 1;
                     },
@@ -134,17 +150,18 @@ fn solve_second(input: &((u64, u64, u64), Vec<u64>)) -> u64 {
                 }
             }
 
+            // The higher bits are already equal, so we can just compare the rest of the number without masking
             if output >> (position * 3) == target >> (position * 3) {
                 if position == 0 {
-                    if try_value < found {
-                        found = try_value;
+                    if test_seed < register_a_seed {
+                        register_a_seed = test_seed;
                     }
                 } else {
-                    queue.push_back((try_value, position - 1));
+                    queue.push_back((test_seed, position - 1));
                 }
             }
         }
     }
 
-    found
+    register_a_seed
 }
