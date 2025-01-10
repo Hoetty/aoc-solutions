@@ -82,8 +82,7 @@ fn bytes_num(bytes: &[u8]) -> u64 {
 }
 
 fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
-    let ((_ao, bo, co), instructions) = input;
-
+    let ((_, b_initial, c_initial), instructions) = input;
     let target = bytes_num(instructions);
 
     let mut queue: VecDeque<(u64, u8)> = VecDeque::new();
@@ -92,35 +91,30 @@ fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
 
     queue.push_back((0, instructions.len() as u8 - 1));
 
-    while !queue.is_empty() {
-        let (start_value, position) = queue.pop_front().unwrap();
-
+    while let Some((start_value, position)) = queue.pop_front() {
         if start_value > found {
             continue;
         }
 
         for i in 0..8 {
-
             let try_value = start_value | (i << (3 * position));
 
             let mut a = try_value;
-            let mut b = *bo;
-            let mut c = *co;
-    
-            let mut output: Vec<u8> = Vec::new();
-        
+            let mut b = *b_initial;
+            let mut c = *c_initial;
+
+            let mut output = 0;
+            let mut output_len = 0;
+
             let mut ip = 0;
-            loop {
-                if ip >= instructions.len() {
-                    break;
-                }
-        
-                let current_instruction = instructions[ip];
+
+            while ip < instructions.len() {
+                let instruction = instructions[ip];
                 let opcode = instructions[ip + 1];
-        
+
                 ip += 2;
-        
-                match current_instruction {
+
+                match instruction {
                     0 => a = a >> combo(opcode, a, b, c),
                     1 => b ^= opcode as u64,
                     2 => b = combo(opcode, a, b, c) & 0b111,
@@ -128,16 +122,17 @@ fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
                         ip = opcode as usize
                     },
                     4 => b ^= c,
-                    5 => output.push((combo(opcode, a, b, c) & 0b111) as u8),
+                    5 => {
+                        output |= ((combo(opcode, a, b, c) & 0b111) as u64) << (output_len * 3);
+                        output_len += 1;
+                    },
                     6 => b = a >> combo(opcode, a, b, c),
                     7 => c = a >> combo(opcode, a, b, c),
-                    _ => panic!("Unknown instruction {current_instruction}")
+                    _ => panic!("Unknown instruction {instruction}")
                 }
             }
-    
-            let wrong = bytes_num(&output) ^ target;
-    
-            if wrong & (7 << (position * 3)) == 0 {
+
+            if output >> (position * 3) == target >> (position * 3) {
                 if position == 0 {
                     if try_value < found {
                         found = try_value;
