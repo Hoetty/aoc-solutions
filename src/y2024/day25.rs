@@ -4,45 +4,66 @@ use crate::solutions;
 
 solutions!{2024, 25}
 
-type Heights = [u8; 5];
+const WIDTH: usize = 5;
+const OFFSET: usize = 6;
+const HEIGHT: u8 = 7;
+
+const NUMBER_OF_SCHEMATICS: usize = 250;
+
+type Heights = [u8; WIDTH];
 
 fn get_input(file: &str) -> (Vec<Heights>, Vec<Heights>) {
     let file = fs::read_to_string(file).unwrap();
-    let patterns = file.split("\n\n");
+    let schematics = file.split("\n\n")
+        .map(|schematic| schematic.chars().collect::<Vec<_>>())
+        .map(|schematic| if schematic[0] == '#' { 
+            // If we see this character for the first time, we know the height
+            (true, schematic, '.') 
+        } else { 
+            (false, schematic, '#') 
+        });
 
-    let mut templates = Vec::with_capacity(64);
-    let mut keys = Vec::with_capacity(64);
+    let mut locks = Vec::with_capacity(NUMBER_OF_SCHEMATICS);
+    let mut keys = Vec::with_capacity(NUMBER_OF_SCHEMATICS);
 
-    for pattern in patterns {
-        let (destination, iter) = if pattern.starts_with('#') {
-            (&mut templates, pattern.lines().collect::<Vec<&str>>())
-        } else {
-            (&mut keys, pattern.lines().rev().collect())
-        };
-
-        let mut heights = [0; 5];
-        for (y, line) in iter.iter().enumerate() {
-            for (x, char) in line.chars().enumerate() {
-                if char == '.' && heights[x] == 0 {
-                    heights[x] = y as u8;
+    for (is_lock, schematic, character) in schematics {
+        let mut heights = [0; WIDTH];
+        for x in 0..WIDTH {
+            for y in 0..(HEIGHT as usize) {
+                // Due to the newlines not being stripped, the offset is 6
+                if schematic[x + y * OFFSET] == character {
+                    heights[x] = if is_lock { y as u8 } else { HEIGHT - y as u8 };
+                    break;
                 }
             }
         }
 
-        destination.push(heights);
+        if is_lock {
+            locks.push(heights);
+        } else {
+            keys.push(heights);
+        }
     }
 
-    (templates, keys)
+    (locks, keys)
 }
 
-const HEIGHT: u8 = 7;
-
+/// ### Fitting Key
+/// 
+/// Tests all keys for each lock to see if the keys heights fit into the locks height,
+/// shown by their combined heights being at most 7
 fn solve_first(input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
     let mut fitting = 0;
 
-    for template in &input.0 {
+    for lock in &input.0 {
         for key in &input.1 {
-            if template[0] + key[0] <= HEIGHT && template[1] + key[1] <= HEIGHT && template[2] + key[2] <= HEIGHT && template[3] + key[3] <= HEIGHT && template[4] + key[4] <= HEIGHT {
+            if 
+                lock[0] + key[0] <= HEIGHT && 
+                lock[1] + key[1] <= HEIGHT && 
+                lock[2] + key[2] <= HEIGHT && 
+                lock[3] + key[3] <= HEIGHT && 
+                lock[4] + key[4] <= HEIGHT 
+            {
                 fitting += 1;
             }
         }
@@ -51,6 +72,9 @@ fn solve_first(input: &(Vec<Heights>, Vec<Heights>)) -> u64 {
     fitting
 }
 
+/// ### Chronicle
+/// 
+/// Does nothing as Part 1 was the last puzzle
 fn solve_second(_input: &(Vec<Heights>, Vec<Heights>)) -> &'static str {
     ""
 }
