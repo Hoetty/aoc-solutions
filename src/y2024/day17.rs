@@ -41,20 +41,16 @@ fn combo(value: u8, a: u64, b: u64, c: u64) -> u64 {
 fn solve_first(input: &((u64, u64, u64), Vec<u8>)) -> String {
     let ((mut a, mut b, mut c), instructions) = input;
 
-    let mut output: Vec<u8> = Vec::new();
-
     let mut ip = 0;
-    loop {
-        if ip >= instructions.len() {
-            break;
-        }
+    let mut output = String::new();
 
-        let current_instruction = instructions[ip];
+    while ip < instructions.len() {
+        let instruction = instructions[ip];
         let opcode = instructions[ip + 1];
 
         ip += 2;
 
-        match current_instruction {
+        match instruction {
             0 => a = a >> combo(opcode, a, b, c),
             1 => b ^= opcode as u64,
             2 => b = combo(opcode, a, b, c) & 0b111,
@@ -62,33 +58,27 @@ fn solve_first(input: &((u64, u64, u64), Vec<u8>)) -> String {
                 ip = opcode as usize
             },
             4 => b ^= c,
-            5 => output.push((combo(opcode, a, b, c) & 0b111) as u8),
+            5 => {
+                let number = (combo(opcode, a, b, c) & 0b111) as u8;
+                output.push((number + b'0') as char);
+                output.push(',');
+            },
             6 => b = a >> combo(opcode, a, b, c),
             7 => c = a >> combo(opcode, a, b, c),
-            _ => panic!("Unknown instruction {current_instruction}")
+            _ => panic!("Unknown instruction {instruction}")
         }
     }
 
-    let mut result = String::new();
-
-    result.push((output[0] + 48) as char);
-
-    for num in &output[1..] {
-        result.push(',');
-        result.push((*num + 48) as char);
-    }
-
-    result
+    output.pop().unwrap();
+    output
 }
 
-fn bytes_num(nums: &[u8]) -> u64 {
-    let mut carry: u64 = 0;
-
-    for (i, num) in nums.iter().enumerate() {
-        carry += (*num as u64) << (i * 3);
+fn bytes_num(bytes: &[u8]) -> u64 {
+    let mut output: u64 = 0;
+    for (i, byte) in bytes.iter().enumerate() {
+        output += (*byte as u64) << (i * 3);
     }
-
-    carry
+    output
 }
 
 fn solve_second(input: &((u64, u64, u64), Vec<u8>)) -> u64 {
