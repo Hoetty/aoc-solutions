@@ -4,20 +4,29 @@ use crate::solutions;
 
 solutions!{2024, 17}
 
+const REGISTER_SKIP_LEN: usize = "Register _: ".len();
+const PROGRAM_SKIP_LEN: usize = "Program: ".len();
 
 fn get_input(file: &str) -> ((u64, u64, u64), Vec<u8>) {
     let file = fs::read_to_string(file).expect("No file there");
     let lines: Vec<&str> = file.lines().collect();
 
-    let a = lines[0]["Register _: ".len()..].parse().unwrap();
-    let b = lines[1]["Register _: ".len()..].parse().unwrap();
-    let c = lines[2]["Register _: ".len()..].parse().unwrap();
+    let a = lines[0][REGISTER_SKIP_LEN..].parse().unwrap();
+    let b = lines[1][REGISTER_SKIP_LEN..].parse().unwrap();
+    let c = lines[2][REGISTER_SKIP_LEN..].parse().unwrap();
 
-    let instructions = lines[4]["Program: ".len()..].replace(",", "").chars().map(|c| c as u8 - 48).collect();
+    let instructions = lines[4][PROGRAM_SKIP_LEN..]
+        .chars()
+        .step_by(2)
+        .map(|c| c as u8 - b'0')
+        .collect();
 
     ((a, b, c), instructions)
 }
 
+/// Computes the combo value for the given value
+/// 0..=3 evaluate to the value itself
+/// Then 4, 5 and 6 correspond to the values in register a, b and c
 #[inline(always)]
 fn combo(value: u8, a: u64, b: u64, c: u64) -> u64 {
     match value {
