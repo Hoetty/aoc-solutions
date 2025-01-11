@@ -11,7 +11,6 @@ pub mod formatting;
 pub mod util;
 
 fn main() {
-
     let args = Args::parse();
 
     let years = args.years();

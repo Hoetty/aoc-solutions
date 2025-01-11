@@ -2,8 +2,8 @@ use clap::Parser;
 
 use crate::{y2015, y2024};
 
-/// Solve all implemented AOC Puzzles
-/// Keep your input files under "./inputs/{year}/day{day}.txt"
+/// Solve all implemented AOC Puzzles \
+/// Keep your input files under "./inputs/{year}/day{day}.txt" \
 /// Keep your answer file (answers seperated by a newline) under "./expect/{year}/day{day}.txt"
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -15,6 +15,10 @@ pub struct Args {
     /// The days to run
     #[arg(short, long, requires("year"))]
     pub day: Vec<u8>,
+
+    /// Redact solutions from output
+    #[arg(short, long)]
+    pub redact: bool
 }
 
 impl Args {

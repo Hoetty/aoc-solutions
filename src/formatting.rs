@@ -65,8 +65,8 @@ pub fn format_percentage(time: u128, total: u128) -> String {
 }
 
 #[inline(always)]
-pub fn format_solution(solution: &String) -> &String {
-    solution
+pub fn format_solution(solution: &str, redact: bool) -> &str {
+    if redact { "######" } else { solution }
 }
 
 pub fn format_test(passed: bool) -> String {
@@ -87,7 +87,7 @@ pub fn time_color(time: u128) -> Color {
     }
 }
 
-pub fn year(name: &str, solutions: Vec<Solution>) -> String {
+pub fn year(name: &str, solutions: Vec<Solution>, redact: bool) -> String {
     let total_time: u128 = solutions.iter().map(|s| s.time_1 + s.time_2 + s.input_time).sum::<u128>();
 
     let mut builder = Builder::default();
@@ -118,8 +118,8 @@ pub fn year(name: &str, solutions: Vec<Solution>) -> String {
         }
 
         builder.push_record([&solution.name, "I", "", "", &format_time(solution.input_time), &format_percentage(solution.input_time, total_time)]);
-        builder.push_record(["", "#1", format_solution(&solution.solution_1), &format_test(passed_1) , &format_time(solution.time_1), &format_percentage(solution.time_1, total_time)]);
-        builder.push_record(["", "#2", format_solution(&solution.solution_2), &format_test(passed_2), &format_time(solution.time_2), &format_percentage(solution.time_2, total_time)]);
+        builder.push_record(["", "#1", format_solution(&solution.solution_1, redact), &format_test(passed_1) , &format_time(solution.time_1), &format_percentage(solution.time_1, total_time)]);
+        builder.push_record(["", "#2", format_solution(&solution.solution_2, redact), &format_test(passed_2), &format_time(solution.time_2), &format_percentage(solution.time_2, total_time)]);
         builder.push_record(["", "", "", &format_test(passed), &format_time(solution.time_1 + solution.time_2 + solution.input_time), &format_percentage(solution.time_1 + solution.time_2 + solution.input_time, total_time)]);
         builder.push_record([""]);
 

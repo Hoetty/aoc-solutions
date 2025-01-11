@@ -30,5 +30,5 @@ pub fn solve_all(args: &Args) -> String {
         }).collect()
     };
 
-    year("2015", days)
+    year("2015", days, args.redact)
 }
