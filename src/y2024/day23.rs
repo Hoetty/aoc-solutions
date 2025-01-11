@@ -1,123 +1,135 @@
 use std::fs;
 
-use rustc_hash::FxHashSet;
-use petgraph::graph::{NodeIndex, UnGraph};
+use rustc_hash::{FxBuildHasher, FxHashSet};
+use petgraph::{graph::{NodeIndex, UnGraph}, visit::EdgeRef};
 
 use crate::solutions;
 
 solutions!{2024, 23}
 
 type Triangles = Vec<[u16; 3]>;
+type NodeSet = FxHashSet<NodeIndex<u16>>;
 
-fn get_input(file: &str) -> (UnGraph<(), (), u16>, Triangles) {
+fn get_input(file: &str) -> (UnGraph<(), (), u16>, NodeSet) {
     let graph = UnGraph::from_edges(
         fs::read_to_string(file).expect("No file there").lines().map(|line| {
-            let (left, right) = line.split_once("-").unwrap();
-            let (mut cleft, mut cright) = (left.chars(), right.chars());
+            let mut characters = line.chars();
 
-            ((((cleft.next().unwrap() as u16) << 8 ) | cleft.next().unwrap() as u16), (((cright.next().unwrap() as u16) << 8 ) | cright.next().unwrap() as u16))
+            // A nodes index is the first char << 8 | the second char
+            let left = ((characters.next().unwrap() as u16) << 8) | characters.next().unwrap() as u16;
+            characters.next();
+            let right = ((characters.next().unwrap() as u16) << 8) | characters.next().unwrap() as u16;
+
+            (left, right)
         })
     );
 
-    let triangles = find_triangles(&graph);
+    // The graph contains 520 nodes, but the graph library fills in all nodes in between automatically
+    // So we save the nodes here as well, so that we don't process nodes that don't have any edges
+    let mut nodes = FxHashSet::with_capacity_and_hasher(520, FxBuildHasher);
+    nodes.extend(graph.raw_edges().iter().flat_map(|edge| [edge.source(), edge.target()]));
 
-    (graph, triangles)
+    (graph, nodes)
 }
 
-// https://www.cs.cornell.edu/courses/cs6241/2019sp/readings/Chiba-1985-arboricity.pdf
-fn find_triangles(graph: &UnGraph<(), (), u16>) -> Triangles {
+/// An algorithm for finding triangles in a graph as described by [this paper](https://www.cs.cornell.edu/courses/cs6241/2019sp/readings/Chiba-1985-arboricity.pdf)
+/// 
+/// For each node in the graph, mark all its neighbors. For all marked nodes neighbors, check if they are marked
+/// If so, then a triangle has been found. After processing a marked nodes neighbors, remove its edge to the inital node
+fn find_triangles(graph: &UnGraph<(), (), u16>, nodes: &NodeSet) -> Triangles {
     let mut graph = graph.clone();
 
     let mut triangles: Triangles = Vec::new();
 
-    let mut marked: Vec<u16> = vec![0; u16::MAX as usize + 1];
+    let mut marked: Vec<_> = vec![];
 
-    let mut round = 1;
+    // There are 520 nodes in the graph, the last 2 can't form a triangle on their own
+    for &first_node in nodes.iter().take(518) {
+        // Get all neighbors of the starting node
+        marked.extend(graph.edges(first_node).map(|e| (e.id(), e.target())));
 
-    for node in graph.node_indices().rev() {
-        for neighbor in graph.neighbors(node) {
-            marked[neighbor.index()] = round;
-        }
-
-        for neighbor in graph.neighbors(node) {
-            for next_neighbor in graph.neighbors(neighbor) {
-
-                if next_neighbor == node {
-                    continue;
-                }
-
-                if marked[next_neighbor.index()] == round {
-                    triangles.push([node.index() as u16, neighbor.index() as u16, next_neighbor.index() as u16]);
+        while let Some((edge, second_node)) = marked.pop() {
+            for third_node in graph.neighbors(second_node) {
+                // Check if the third node is also a neighbor of the first node
+                for &(_, test_second_node) in &marked {
+                    if test_second_node == third_node {
+                        triangles.push([first_node.index() as u16, second_node.index() as u16, third_node.index() as u16]);
+                        break;
+                    }
                 }
             }
-            marked[neighbor.index()] = 0;
+
+            // Remove the connection from first to second, to avoid duplicates
+            graph.remove_edge(edge);
         }
-        
-        graph.remove_node(node);
-        round += 1;
     }
 
     triangles
 }
 
-fn solve_first(input: &(UnGraph<(), (), u16>, Triangles)) -> usize {
-    input.1
+/// ### Triangles With T
+/// 
+/// Finds all triangles, that have at least one computer whose name starts with 't'
+fn solve_first(input: &(UnGraph<(), (), u16>, NodeSet)) -> usize {
+    find_triangles(&input.0, &input.1)
         .iter()
         .filter(|pc| (pc[0] >> 8) as u8 == b't' || (pc[1] >> 8) as u8 == b't' || (pc[2] >> 8) as u8 == b't')
         .count()
 }
 
-// https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm
-fn bron_kerboschl(graph: &UnGraph<(), (), u16>, r: FxHashSet<NodeIndex<u16>>, p: FxHashSet<NodeIndex<u16>>, x: FxHashSet<NodeIndex<u16>>) -> Option<FxHashSet<NodeIndex<u16>>> {
-    if p.is_empty() && x.is_empty() {
-        Some(r)
+/// The [Bron Kerbosch Algorithm](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm)
+/// Finds the largest completely interconnected set of nodes - the largest clique - inside the graph
+fn bron_kerbosch(graph: &UnGraph<(), (), u16>, clique: NodeSet, mut candidates: NodeSet, mut excluded: NodeSet) -> Option<NodeSet> {
+    // If there are no more candidates, the clique can't grow anymore
+    if candidates.is_empty() {
+        Some(clique)
     } else {
-        let mut candidate: Option<FxHashSet<NodeIndex<u16>>> = None;
-        let mut p = p;
-        let mut x = x;
+        let mut largest_clique: Option<NodeSet> = None;
 
-        let pivot = p.iter().next().unwrap_or_else(|| x.iter().next().unwrap());
+        let pivot = candidates.iter().next().unwrap();
 
-        for node in p.clone().difference(&FxHashSet::from_iter(graph.neighbors(*pivot))) {
-            let neighbors = FxHashSet::from_iter(graph.neighbors(*node));
+        for node in candidates.clone().difference(&graph.neighbors(*pivot).collect()) {
+            let neighbors: NodeSet = graph.neighbors(*node).collect();
 
-            let mut nr = r.clone();
-            nr.insert(*node);
-            let np = FxHashSet::from_iter(p.intersection(&neighbors).copied());
-            let nx = FxHashSet::from_iter(x.intersection(&neighbors).copied());
+            let mut new_clique = clique.clone();
+            new_clique.insert(*node);
+            let new_candidates = candidates.intersection(&neighbors).copied().collect();
+            let new_excluded = excluded.intersection(&neighbors).copied().collect();
 
-            if let Some(clique) = bron_kerboschl(graph, nr, np, nx) {
-                if candidate.is_none() || candidate.as_ref().unwrap().len() < clique.len() {
-                    candidate = Some(clique);
+            if let Some(clique) = bron_kerbosch(graph, new_clique, new_candidates, new_excluded) {
+                if largest_clique.is_none() || largest_clique.as_ref().unwrap().len() < clique.len() {
+                    largest_clique = Some(clique);
                 }
             }
 
-            p.remove(node);
-            x.insert(*node);
+            candidates.remove(node);
+            excluded.insert(*node);
         }
 
-        candidate
+        largest_clique
     }
 }
 
-fn solve_second(input: &(UnGraph<(), (), u16>, Triangles)) -> String {
-    let p = FxHashSet::from_iter(input.1.iter().flatten().map(|num| NodeIndex::from(*num)));
-    let x = FxHashSet::from_iter(FxHashSet::from_iter(input.0.node_indices()).difference(&p).copied());
-    let result = bron_kerboschl(&input.0, FxHashSet::default(), p, x);
+/// ### Largest Clique
+/// 
+/// Finds the largest clique (interconneced group of vertices)
+/// The names of the participating computers are then sorted and assembled into the password
+fn solve_second(input: &(UnGraph<(), (), u16>, NodeSet)) -> String {
+    let result = bron_kerbosch(&input.0, FxHashSet::default(), input.1.clone(), FxHashSet::default());
 
     let mut pcs: Vec<NodeIndex<u16>> = result.unwrap().drain().collect();
     pcs.sort();
 
-    let mut password = String::new();
+    let mut password = String::with_capacity(pcs.len() * 3);
     
     for pc in pcs {
-        if !password.is_empty() {
-            password.push(',');
-        }
-
         password.push((pc.index() >> 8) as u8 as char);
         password.push((pc.index() & 0xFF) as u8 as char);
+        password.push(',');
     }
+
+    // Remove the stray comma
+    password.pop().unwrap();
 
     password
 }
