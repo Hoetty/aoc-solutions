@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fs, mem::swap, rc::Rc};
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::solutions;
 
@@ -14,29 +14,37 @@ enum Equation {
     Xor(u32, u32),
 }
 
-fn string_to_num(gate: &str) -> u32 {
-    let c: Vec<char> = gate.chars().collect();
+/// Converts a gate string like z43 to its u32 representation
+const fn string_to_gate(gate: &str) -> u32 {
+    let bytes = gate.as_bytes();
 
-    ((c[0] as u32) << 16) | ((c[1] as u32) << 8) | (c[2] as u32)
+    ((bytes[0] as u32) << 16) | 
+        ((bytes[1] as u32) << 8) | 
+        (bytes[2] as u32)
 }
 
 fn get_input(file: &str) -> FxHashMap<u32, Equation> {
-    let mut map = FxHashMap::default();
     let file = fs::read_to_string(file).expect("No file there");
-    let (assign, equations) = file.split_once("\n\n").unwrap();
+    
+    let mut connections = FxHashMap::default();
+    let (initial_values, equations) = file.split_once("\n\n").unwrap();
 
-    map.extend(assign.lines().map(|s| {
-        let (name, value) = s.split_once(": ").unwrap();
-        (string_to_num(name), Equation::Value(value.starts_with('1')))
+    // Parses the initial values of the x and y gates
+    connections.extend(initial_values.lines().map(|s| {
+        let (gate, value) = s.split_once(": ").unwrap();
+        (string_to_gate(gate), Equation::Value(value.starts_with('1')))
     }));
 
-    map.extend(equations.lines().map(|e| {
-        let (operation, result) = e.split_once(" -> ").unwrap();
-        let gate = string_to_num(result);
+    // Parses the connections from x and y up to z
+    connections.extend(equations.lines().map(|e| {
+        // Splits x AND y -> z into x AND y, z
+        let (operation, output) = e.split_once(" -> ").unwrap();
+        let gate = string_to_gate(output);
 
+        // Splits x AND y into x, AND, y
         let operands: Vec<&str> = operation.split_whitespace().collect();
-        let left = string_to_num(operands[0]);
-        let right = string_to_num(operands[2]);
+        let left = string_to_gate(operands[0]);
+        let right = string_to_gate(operands[2]);
 
         let equation = match operands[1] {
             "AND" => Equation::And(left, right),
@@ -48,22 +56,25 @@ fn get_input(file: &str) -> FxHashMap<u32, Equation> {
         (gate, equation)
     }));
 
-    map
+    connections
 }
 
+/// A Helper macro to get the already calculated output of a gate, or compute it if neccessary 
 macro_rules! cached_or_evaluate {
     ($gate: ident, $table: ident, $cache: ident) => {
         match $cache.get($gate) {
             None => {
-                let b = &evaluate($table.get($gate).unwrap(), $table, $cache);
-                $cache.insert(*$gate, *b);
-                *b
+                let value = evaluate($table.get($gate).unwrap(), $table, $cache);
+                $cache.insert(*$gate, value);
+                value
             },
             Some(b) => *b
         }
     };
 }
 
+/// Evaluates an equation using the given equation table and cache
+/// For uncached values, this function is recursive until an Equation::Value is hit
 fn evaluate(equation: &Equation, table: &FxHashMap<u32, Equation>, cache: &mut FxHashMap<u32, bool>) -> bool {
     match equation {
         Equation::Value(b) => *b,
@@ -79,21 +90,36 @@ fn evaluate(equation: &Equation, table: &FxHashMap<u32, Equation>, cache: &mut F
     }
 }
 
-
-fn solve_first(input: &FxHashMap<u32, Equation> ) -> u64 {
-    let mut zgates: Vec<u32> = input.keys().filter(|gate| (**gate >> 16) as u8 == b'z').copied().collect();
-    zgates.sort();
+/// There are 46 zgates from z00 to z45
+/// Precompute them for part 1 and 2
+const ZGATES: [u32; 46] = {
+    let mut zgates = [0; 46];
 
     let mut num = 0;
-    let mut cache: FxHashMap<u32, bool> = FxHashMap::default();
-
-    for z in zgates.iter().rev() {
-        num = (num << 1) | evaluate(input.get(z).unwrap(), input, &mut cache) as u64;
+    while num < 46 {
+        zgates[num as usize] = ((b'z' as u32) << 16) | ((num / 10 + b'0' as u32) << 8) | (num % 10 + b'0' as u32);
+        
+        num += 1;
     }
 
-    num
+    zgates
+};
+
+/// ### Device Output
+/// 
+/// Evaluates all equations and produces a final number where bit at i is the value of zi
+fn solve_first(input: &FxHashMap<u32, Equation> ) -> u64 {
+    let mut output = 0;
+    let mut cache: FxHashMap<u32, bool> = FxHashMap::with_capacity_and_hasher(300, FxBuildHasher);
+
+    for (i, z_output_bit) in ZGATES.iter().enumerate() {
+        output |= (evaluate(input.get(z_output_bit).unwrap(), input, &mut cache) as u64) << i;
+    }
+
+    output
 }
 
+/// Expr in constrast to Equation stores direct references to its operands
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Expr {
     Value(u32, bool),
@@ -103,39 +129,43 @@ enum Expr {
 }
 
 impl Expr {
-
     const VALUE: u32 = 1;
     const AND: u32 = 2;
     const OR: u32 = 3;
     const XOR: u32 = 4;
 
-    fn num(&self) -> u32 {
+    /// Gets the output gate of the expr
+    fn gate(&self) -> u32 {
         *match self {
-            Expr::Value(num, _) => num,
-            Expr::And(num, _, _) => num,
-            Expr::Or(num, _, _) => num,
-            Expr::Xor(num, _, _) => num,
+            Expr::Value(gate, _) => gate,
+            Expr::And(gate, _, _) => gate,
+            Expr::Or(gate, _, _) => gate,
+            Expr::Xor(gate, _, _) => gate,
         }
     }
 
+    /// Gets the left and right operands of the expr
+    #[inline]
+    fn sub_exprs(&self) -> (&Rc<Expr>, &Rc<Expr>) {
+        match self {
+            Expr::Value(_, _) => panic!("Called sub_exprs on value"),
+            Expr::And(_, left, right) => (left, right),
+            Expr::Or(_, left, right) => (left, right),
+            Expr::Xor(_, left, right) => (left, right),
+        }
+    }
+
+    /// Gets the left operand of the expr
     fn left(&self) -> &Rc<Expr> {
-        match self {
-            Expr::Value(_, _) => panic!("Called left on value"),
-            Expr::And(_, expr, _) => expr,
-            Expr::Or(_, expr, _) => expr,
-            Expr::Xor(_, expr, _) => expr,
-        }
+        self.sub_exprs().0
     }
 
+    /// Gets the right operand of the expr
     fn right(&self) -> &Rc<Expr> {
-        match self {
-            Expr::Value(_, _) => panic!("Called right on value"),
-            Expr::And(_, _, expr) => expr,
-            Expr::Or(_, _, expr) => expr,
-            Expr::Xor(_, _, expr) => expr,
-        }
+        self.sub_exprs().1
     }
 
+    /// Provides the enum value of the expr, for example for comparision
     fn enum_value(&self) -> u32 {
         match self {
             Expr::Value(_, _) => Self::VALUE,
@@ -145,31 +175,33 @@ impl Expr {
         }
     }
 
+    /// Calculates the deep value from both operands
     fn deep_value(&self) -> u32 {
         match self {
-            Expr::Value(num, _) => *num,
+            Expr::Value(gate, _) => *gate,
             Expr::And(_, expr, expr1) => expr.enum_value() + expr1.enum_value(),
             Expr::Or(_, expr, expr1) => expr.enum_value() + expr1.enum_value(),
             Expr::Xor(_, expr, expr1) => expr.enum_value() + expr1.enum_value(),
         }
     }
 
+    /// Sorts the operands
     fn sort(&mut self) {
         match self {
             Expr::Value(_, _) => { },
-            Expr::And(_, expr, expr1) => {
-                if expr > expr1 {
-                    swap(expr, expr1);
+            Expr::And(_, left, right) => {
+                if left > right {
+                    swap(left, right);
                 }
             },
-            Expr::Or(_, expr, expr1) => {
-                if expr > expr1 {
-                    swap(expr, expr1);
+            Expr::Or(_, left, right) => {
+                if left > right {
+                    swap(left, right);
                 }
             },
-            Expr::Xor(_, expr, expr1) => {
-                if expr > expr1 {
-                    swap(expr, expr1);
+            Expr::Xor(_, left, right) => {
+                if left > right {
+                    swap(left, right);
                 }
             },
         }
@@ -184,6 +216,7 @@ impl PartialOrd for Expr {
 
 impl Ord for Expr {
     fn cmp(&self, other: &Self) -> Ordering {
+        // Order based on the enum value, or the deep value for equal elements
         match self.enum_value().cmp(&other.enum_value()) {
             Ordering::Equal => self.deep_value().cmp(&other.deep_value()),
             cmp => cmp
@@ -191,32 +224,35 @@ impl Ord for Expr {
     }
 }
 
+/// Similar to cached_or_evaluate but for parsing expressions instead
 macro_rules! cached_or_parse {
     ($gate: ident, $table: ident, $cache: ident) => {
         match $cache.get($gate) {
             None => {
-                let b = Rc::new(parse(*$gate, $table, $cache));
-                $cache.insert(*$gate, Rc::clone(&b));
-                b
+                let expr = Rc::new(parse(*$gate, $table, $cache));
+                $cache.insert(*$gate, Rc::clone(&expr));
+                expr
             },
             Some(b) => Rc::clone(b)
         }
     };
 }
 
+/// Parses equations into an AST, where each node holds a direct reference to its operands
 fn parse(gate: u32, table: &FxHashMap<u32, Equation>, cache: &mut FxHashMap<u32, Rc<Expr>>) -> Expr {
     let mut expr = match table.get(&gate).unwrap() {
-        Equation::Value(b) => Expr::Value(gate, *b),
-        Equation::And(l, r) => {
-            Expr::And(gate, cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache))
+        Equation::Value(value) => Expr::Value(gate, *value),
+        Equation::And(left, right) => {
+            Expr::And(gate, cached_or_parse!(left, table, cache), cached_or_parse!(right, table, cache))
         },
-        Equation::Or(l, r) => {
-            Expr::Or(gate, cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache))
+        Equation::Or(left, right) => {
+            Expr::Or(gate, cached_or_parse!(left, table, cache), cached_or_parse!(right, table, cache))
         },
-        Equation::Xor(l, r) => {
-            Expr::Xor(gate, cached_or_parse!(l, table, cache), cached_or_parse!(r, table, cache))
+        Equation::Xor(left, right) => {
+            Expr::Xor(gate, cached_or_parse!(left, table, cache), cached_or_parse!(right, table, cache))
         },
     };
+
     expr.sort();
     expr
 }
@@ -225,50 +261,66 @@ const Z45: u32 = 8008757;
 const Z01: u32 = 8007729;
 const X01: u32 = 7876657;
 
+/// Checks if the specified output gate is a z_gate
 #[inline(always)]
-fn is_z_num(num: u32) -> bool {
-    (num >> 16) & 0xFF == b'z' as u32
+const fn is_z_gate(gate: u32) -> bool {
+    (gate >> 16) & 0xFF == b'z' as u32
 }
 
+/// Tests all gates if they are valid and collects all invalid gates into a vector
 fn validate(gates: &FxHashMap<u32, Rc<Expr>>) -> Vec<u32> {
     let mut wrong = vec![];
 
+    // zgates that are not the last one (45) MUST be an XOR
     wrong.extend(
-        gates.iter().filter(|(num, expr)| is_z_num(**num) && **num != Z45 && expr.enum_value() != Expr::XOR).map(|(num, _)| num)
+        gates.iter().filter(|(gate, expr)| is_z_gate(**gate) && **gate != Z45 && expr.enum_value() != Expr::XOR).map(|(num, _)| num)
     );
 
+    // XOR Gates must either output into a zgate or accept two values as input
     wrong.extend(
-        gates.iter().filter(|(num, expr)| expr.enum_value() == Expr::XOR && (**num >> 16) & 0xFF != b'z' as u32 && !(expr.left().enum_value() == Expr::VALUE && expr.right().enum_value() == Expr::VALUE)).map(|(num, _)| num)
+        gates.iter().filter(|(gate, expr)| expr.enum_value() == Expr::XOR && !is_z_gate(**gate) && !(expr.left().enum_value() == Expr::VALUE && expr.right().enum_value() == Expr::VALUE)).map(|(num, _)| num)
     );
 
+    // AND Gates not at the start (z01) only output into an OR gate 
     wrong.extend(
-        gates.iter().filter(|(num, expr)| (expr.enum_value() == Expr::AND || expr.enum_value() == Expr::XOR) && expr.left().enum_value() == Expr::AND && **num != Z01 && expr.right().left().num() != X01).map(|(_, expr)| expr.left().num())
+        gates.iter().filter(|(gate, expr)| (expr.enum_value() == Expr::AND || expr.enum_value() == Expr::XOR) && expr.left().enum_value() == Expr::AND && **gate != Z01 && expr.right().left().gate() != X01).map(|(_, expr)| expr.left().gate())
     );
 
+    // XOR Gates can't be the input of an OR expr
     wrong.extend(
-        gates.iter().filter(|(_, expr)| expr.enum_value() == Expr::OR && expr.right().enum_value() == Expr::XOR).map(|(_, expr)| expr.right().num())
+        gates.iter().filter(|(_, expr)| expr.enum_value() == Expr::OR && expr.right().enum_value() == Expr::XOR).map(|(_, expr)| expr.right().gate())
     );
 
     wrong
 }
 
-fn num_to_str(num: u32) -> String {
-    [(num >> 16) as u8 as char, ((num >> 8) & 0xFF) as u8 as char, (num & 0xFF) as u8 as char].iter().collect()
+/// Converts a gate number back into a string
+fn gate_to_str(gate: u32) -> String {
+    [
+        (gate >> 16) as u8 as char, 
+        ((gate >> 8) & 0xFF) as u8 as char, 
+        (gate & 0xFF) as u8 as char
+    ].iter().collect()
 }
 
+/// ### Swapped Outputs
+/// 
+/// Finds the incorrect outputs in the full adder described by the equations and returns them as sequence
 fn solve_second(input: &FxHashMap<u32, Equation> ) -> String {
-    let mut zgates: Vec<u32> = input.keys().filter(|gate| (**gate >> 16) as u8 == b'z').copied().collect();
-    zgates.sort();
-    let mut cache: FxHashMap<u32, Rc<Expr>> = FxHashMap::default();
+    let mut cache: FxHashMap<u32, Rc<Expr>> = FxHashMap::with_capacity_and_hasher(400, FxBuildHasher);
 
-    for z in zgates.iter() {
-        let expr = Rc::new(parse(*z, input, &mut cache));
-        cache.insert(*z, expr);
+    for z_output_bit in ZGATES.iter() {
+        let expr = Rc::new(parse(*z_output_bit, input, &mut cache));
+        cache.insert(*z_output_bit, expr);
     }
 
     let mut wrong = validate(&cache);
     wrong.sort();
     wrong.dedup();
 
-    wrong.iter().copied().map(&num_to_str).collect::<Vec<String>>().join(",")
+    wrong.iter()
+        .copied()
+        .map(&gate_to_str)
+        .collect::<Vec<String>>()
+        .join(",")
 }
