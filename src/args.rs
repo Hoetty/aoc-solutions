@@ -12,13 +12,17 @@ pub struct Args {
     #[arg(short, long)]
     pub year: Vec<u16>,
 
-    /// The days to run
+    /// The days to run (requires year)
     #[arg(short, long, requires("year"))]
     pub day: Vec<u8>,
 
     /// Redact solutions from output
     #[arg(short, long)]
-    pub redact: bool
+    pub redact: bool,
+
+    /// Output to ./output.txt in addition to the terminal
+    #[arg(short, long)]
+    pub output: bool
 }
 
 impl Args {

@@ -20,6 +20,8 @@ fn main() {
     fs::remove_file("output.txt").unwrap_or(());
 
     println!("{output}");
-    fs::write("output.txt", strip(output)).unwrap_or(());
+    if args.output {
+        fs::write("output.txt", strip(output)).unwrap_or(());
+    }
 
 }
