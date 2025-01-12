@@ -5,3 +5,4 @@
 !visualizations/**/*
 !Cargo.lock
 !Cargo.toml
+!README.md
