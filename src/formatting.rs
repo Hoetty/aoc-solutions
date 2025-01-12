@@ -1,4 +1,4 @@
-use std::{fmt::Display, fs, time::Instant};
+use std::{fmt::Display, fs, ops::BitAnd, time::Instant};
 use tabled::{builder::Builder, settings::{object::{Cell, Columns, Object, Row, Rows, Segment}, themes::Colorization, Alignment, Border, Color, Style}};
 
 #[macro_export]
@@ -30,6 +30,27 @@ pub struct Solution {
     time_2: u128,
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum TestResult {
+    Success,
+    Failure,
+    Unknown
+}
+
+impl BitAnd for TestResult {
+    type Output = TestResult;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        if self == TestResult::Unknown || rhs == TestResult::Unknown {
+            TestResult::Unknown
+        } else if self == TestResult::Failure || rhs == TestResult::Failure {
+            TestResult::Failure
+        } else {
+            TestResult::Success
+        }
+    }
+}
+
 impl Solution {
 
     pub fn evaluated<S: Display, T: Display, F, G>(name: String, first: F, second: G, input_time: u128) -> Solution where F: FnOnce() -> S, G: FnOnce() -> T {
@@ -39,12 +60,18 @@ impl Solution {
         Solution { name, input_time, solution_1: first.to_string(), time_1: time_first, solution_2: second.to_string(), time_2: time_second }
     }
 
-    pub fn test(&self, year: &str) -> (bool, bool) {
+    pub fn test(&self, year: &str) -> (TestResult, TestResult) {
         let filename = self.name.to_lowercase().replace(" ", "");
-        let file = fs::read_to_string(format!("./expect/{year}/{filename}.txt")).unwrap();
-        let (first, second) = file.split_once("\n").unwrap();
+        let Ok(file) = fs::read_to_string(format!("./expect/{year}/{filename}.txt")) else {
+            return (TestResult::Unknown, TestResult::Unknown);
+        };
 
-        (self.solution_1 == first, self.solution_2 == second)
+        let (first, second) = file.split_once("\n").unwrap_or_else(|| panic!("./expect/{year}/{filename}.txt: Please keep your expected inputs in the format <solution1><newline><solution2>"));
+
+        (
+            if self.solution_1 == first { TestResult::Success } else { TestResult::Failure }, 
+            if self.solution_2 == second { TestResult::Success } else { TestResult::Failure }
+        )
     }
 
 }
@@ -69,11 +96,13 @@ pub fn format_solution(solution: &str, redact: bool) -> &str {
     if redact { "######" } else { solution }
 }
 
-pub fn format_test(passed: bool) -> String {
-    if passed {
+pub fn format_test(passed: TestResult) -> String {
+    if passed == TestResult::Success {
         "✔".to_string()
-    } else {
+    } else if passed == TestResult::Failure {
         "✘".to_string()
+    } else {
+        "?".to_string()
     }
 }
 
@@ -94,7 +123,7 @@ pub fn year(name: &str, solutions: Vec<Solution>, redact: bool) -> String {
 
     builder.push_record(["", "", &format!("Year {name}")]);
 
-    let mut passed_all = true;
+    let mut passed_all = TestResult::Success;
     let mut failed: Vec<Cell> = vec![];
     let mut row_colors: Vec<(Row, Color)> = vec![];
 
@@ -102,18 +131,18 @@ pub fn year(name: &str, solutions: Vec<Solution>, redact: bool) -> String {
 
     for solution in &solutions {
         let (passed_1, passed_2) = solution.test(name);
-        let passed = passed_1 && passed_2;
-        passed_all = passed_all && passed;
+        let passed = passed_1 & passed_2;
+        passed_all = passed_all & passed;
 
-        if !passed_1 {
+        if passed_1 != TestResult::Success {
             failed.push(Cell::new(i + 1, 3));
         }
 
-        if !passed_2 {
+        if passed_2 != TestResult::Success {
             failed.push(Cell::new(i + 2, 3));
         }
 
-        if !passed {
+        if passed != TestResult::Success {
             failed.push(Cell::new(i + 3, 3));
         }
 
@@ -134,7 +163,7 @@ pub fn year(name: &str, solutions: Vec<Solution>, redact: bool) -> String {
     builder.push_record(["Total", "", "", &format_test(passed_all), &format_time(total_time), &format_percentage(total_time, total_time)]);
     row_colors.push((Rows::single(i), time_color(total_time)));
 
-    if !passed_all {
+    if passed_all != TestResult::Success {
         failed.push(Cell::new(i, 3));
     }
 
