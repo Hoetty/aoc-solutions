@@ -72,7 +72,7 @@ into ```./expect/2024/day1.txt```
 ### Performance
 My solutions are optimized for both performance and code readability. The code is not parallelized, it just runs on one core.
 
-For my setup, the entire year 2024 completes in around 40ms.
+For my setup, the entire year 2024 completes in around 40ms (if you want to see really fast solutions, then check out [this cool repo](https://github.com/indiv0/aoc-fastest))
 ```
 ======== ==== =========== === ========== =========
                Year 2024                          
