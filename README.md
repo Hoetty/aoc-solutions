@@ -1,5 +1,5 @@
 # My Advent of Code (AOC) Solutions
-Checkout advent of code at [https://adventofcode.com](https://adventofcode.com)
+Check out advent of code at [https://adventofcode.com](https://adventofcode.com)
 
 The solutions are written in Rust and cover mainly 2024, with all days available
 
