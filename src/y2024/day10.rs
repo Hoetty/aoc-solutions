@@ -33,13 +33,13 @@ fn get_input(file: &str) -> Vec<(usize, usize)> {
 fn get_trails(map: &[u8], trail_heads: &Vec<usize>, width: usize, height: usize) -> Vec<(usize, usize)> {
     let mut trails = Vec::with_capacity(1024);
     // A queue to hold all positions we need to evaluate
-    let mut queue = VecDeque::new();
+    let mut queue = Vec::new();
 
     for tail_head in trail_heads {
-        queue.push_back(*tail_head);
+        queue.push(*tail_head);
 
         while !queue.is_empty() {
-            let current = queue.pop_front().unwrap();
+            let current = queue.pop().unwrap();
             let value = map[current];
             let next_value = value + 1;
 
@@ -50,19 +50,19 @@ fn get_trails(map: &[u8], trail_heads: &Vec<usize>, width: usize, height: usize)
             }
 
             if current % width < width - 1 && map[current + 1] == next_value {
-                queue.push_back(current + 1);
+                queue.push(current + 1);
             }
 
             if current % width > 0 && map[current - 1] == next_value {
-                queue.push_back(current - 1);
+                queue.push(current - 1);
             }
 
             if current / width < height - 1 && map[current + width] == next_value {
-                queue.push_back(current + width);
+                queue.push(current + width);
             }
 
             if current / width > 0 && map[current - width] == next_value {
-                queue.push_back(current - width);
+                queue.push(current - width);
             }
         }
     }

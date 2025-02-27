@@ -28,7 +28,7 @@ const VALUE_MASK: u8 = 0x7F;
 fn solve_first(input: &Garden) -> u64 {
     let mut total_price = 0;
     let mut grid = input.clone();
-    let mut queue = VecDeque::new();
+    let mut queue = Vec::with_capacity(64);
 
     for start_index in Garden::indices() {
         // If this plot has been visited by another scan, we skip it entirely
@@ -39,9 +39,9 @@ fn solve_first(input: &Garden) -> u64 {
         let mut plot_area = 0;
         let mut plot_perimiter = 0;
 
-        queue.push_back(start_index);
+        queue.push(start_index);
 
-        while let Some(index) = queue.pop_front() {
+        while let Some(index) = queue.pop() {
             let current_crop = grid[index];
             
             // If the visited bit is set, we don't process this plot a second time
@@ -54,7 +54,7 @@ fn solve_first(input: &Garden) -> u64 {
             if !Garden::will_horizontal_move_cross_border(index, -1) && 
                 grid[Garden::moved_horizontally(index, -1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_horizontally(index, -1));
+                queue.push(Garden::moved_horizontally(index, -1));
             } else {
                 plot_perimiter += 1;
             }
@@ -62,7 +62,7 @@ fn solve_first(input: &Garden) -> u64 {
             if !Garden::will_horizontal_move_cross_border(index, 1) && 
                 grid[Garden::moved_horizontally(index, 1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_horizontally(index, 1));
+                queue.push(Garden::moved_horizontally(index, 1));
             } else {
                 plot_perimiter += 1;
             }
@@ -70,7 +70,7 @@ fn solve_first(input: &Garden) -> u64 {
             if !Garden::will_vertical_move_cross_border(index, -1) && 
                 grid[Garden::moved_vertically(index, -1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_vertically(index, -1));
+                queue.push(Garden::moved_vertically(index, -1));
             } else {
                 plot_perimiter += 1;
             }
@@ -78,7 +78,7 @@ fn solve_first(input: &Garden) -> u64 {
             if !Garden::will_vertical_move_cross_border(index, 1) && 
                 grid[Garden::moved_vertically(index, 1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_vertically(index, 1));
+                queue.push(Garden::moved_vertically(index, 1));
             } else {
                 plot_perimiter += 1;
             }
@@ -101,19 +101,19 @@ fn solve_first(input: &Garden) -> u64 {
 fn solve_second(input: &FlatGrid<u8, WIDTH, HEIGHT>) -> u64 {
     let mut price = 0;
     let mut grid = input.clone();
-    let mut queue = VecDeque::new();
+    let mut queue = Vec::with_capacity(64);
 
     for start_index in Garden::indices() {
         if grid[start_index] & VISITED != 0 {
             continue;
         }
 
-        queue.push_back(start_index);
+        queue.push(start_index);
 
         let mut plot_area = 0;
         let mut plot_perimiter = 0;
 
-        while let Some(index) = queue.pop_front() {
+        while let Some(index) = queue.pop() {
             let current_crop = grid[index];
             
             if current_crop & VISITED != 0 {
@@ -127,7 +127,7 @@ fn solve_second(input: &FlatGrid<u8, WIDTH, HEIGHT>) -> u64 {
             if !Garden::will_horizontal_move_cross_border(index, -1) && 
                 grid[Garden::moved_horizontally(index, -1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_horizontally(index, -1));
+                queue.push(Garden::moved_horizontally(index, -1));
             } else if y == 0 || (grid[Garden::moved_vertically(index, -1)] & VALUE_MASK != current_crop || (x > 0 && grid[Garden::moved(index, -1, -1)] & VALUE_MASK == current_crop)) {
                 plot_perimiter += 1;
             }
@@ -135,7 +135,7 @@ fn solve_second(input: &FlatGrid<u8, WIDTH, HEIGHT>) -> u64 {
             if !Garden::will_horizontal_move_cross_border(index, 1) && 
                 grid[Garden::moved_horizontally(index, 1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_horizontally(index, 1));
+                queue.push(Garden::moved_horizontally(index, 1));
             } else if y == 0 || (grid[Garden::moved_vertically(index, -1)] & VALUE_MASK != current_crop || (x < Garden::width() - 1 && grid[Garden::moved(index, 1, -1)] & VALUE_MASK == current_crop)) {
                 plot_perimiter += 1;
             }
@@ -143,7 +143,7 @@ fn solve_second(input: &FlatGrid<u8, WIDTH, HEIGHT>) -> u64 {
             if !Garden::will_vertical_move_cross_border(index, -1) && 
                 grid[Garden::moved_vertically(index, -1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_vertically(index, -1));
+                queue.push(Garden::moved_vertically(index, -1));
             } else if x == 0 || (grid[Garden::moved_horizontally(index, -1)] & VALUE_MASK != current_crop || (y > 0 && grid[Garden::moved(index, -1, -1)] & VALUE_MASK == current_crop)) {
                 plot_perimiter += 1;
             }
@@ -151,7 +151,7 @@ fn solve_second(input: &FlatGrid<u8, WIDTH, HEIGHT>) -> u64 {
             if !Garden::will_vertical_move_cross_border(index, 1) && 
                 grid[Garden::moved_vertically(index, 1)] & VALUE_MASK == current_crop 
             {
-                queue.push_back(Garden::moved_vertically(index, 1));
+                queue.push(Garden::moved_vertically(index, 1));
             } else if x == 0 || (grid[Garden::moved_horizontally(index, -1)] & VALUE_MASK != current_crop || (y < Garden::height() - 1 && grid[Garden::moved(index, -1, 1)] & VALUE_MASK == current_crop)) {
                 plot_perimiter += 1;
             }

@@ -99,14 +99,14 @@ fn solve_second(input: &((u64, u64, u64), Vec<u64>)) -> u64 {
     let ((_, b_initial, c_initial), instructions) = input;
     let target = bytes_num(instructions);
 
-    let mut queue: VecDeque<(u64, u64)> = VecDeque::new();
+    let mut queue: Vec<(u64, u64)> = Vec::with_capacity(64);
 
     let mut register_a_seed = u64::MAX;
 
-    queue.push_back((0, instructions.len() as u64 - 1));
+    queue.push((0, instructions.len() as u64 - 1));
 
     while !queue.is_empty() {
-        let (start_seed, position) = queue.pop_front().unwrap();
+        let (start_seed, position) = queue.pop().unwrap();
 
         if start_seed > register_a_seed {
             continue;
@@ -157,7 +157,7 @@ fn solve_second(input: &((u64, u64, u64), Vec<u64>)) -> u64 {
                         register_a_seed = test_seed;
                     }
                 } else {
-                    queue.push_back((test_seed, position - 1));
+                    queue.push((test_seed, position - 1));
                 }
             }
         }
