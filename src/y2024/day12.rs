@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, fs};
+use std::fs;
 
 use crate::{solutions, util::flatgrid::FlatGrid};
 

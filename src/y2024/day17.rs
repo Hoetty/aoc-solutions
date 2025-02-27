@@ -1,6 +1,6 @@
 //! Design Choice: The instructions are saved in a u64 even if they can only be between 0 and 8
 //! However, using u64 over u8 results in 32% better performace
-use std::{collections::VecDeque, fs::{self}};
+use std::fs::{self};
 use crate::solutions;
 
 solutions!{2024, 17}
